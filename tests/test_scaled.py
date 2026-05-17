@@ -2,7 +2,6 @@
 Tests for fieldframe.fields.scaled — ScaledField class.
 """
 
-import math
 import pytest
 from fieldframe.fields.scaled import ScaledField
 

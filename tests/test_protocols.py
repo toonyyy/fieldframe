@@ -6,7 +6,6 @@ import pytest
 from fieldframe.core import Message
 from fieldframe.protocols import Protocol
 from fieldframe.fields.field import Field
-from fieldframe.fields.flags import FlagsField
 from fieldframe.types.int import uint_type
 
 

@@ -4,7 +4,7 @@ Tests for fieldframe.fields.compute — ComputedField class.
 
 import pytest
 from fieldframe.fields.compute import ComputedField
-from fieldframe.types.int import uint_type, int_type, IntType
+from fieldframe.types.int import uint_type, int_type
 
 
 # ---------------------------------------------------------------------------

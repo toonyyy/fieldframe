@@ -5,7 +5,7 @@ Tests for fieldframe.fields.field — Field class.
 import pytest
 from fieldframe.fields.field import Field
 from fieldframe.types.int import IntType, uint_type, int_type
-from fieldframe.types.float import FloatType, single_type, double_type
+from fieldframe.types.float import single_type, double_type
 from fieldframe.types.string import StringType
 
 
