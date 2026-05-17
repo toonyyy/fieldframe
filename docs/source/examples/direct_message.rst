@@ -9,7 +9,7 @@ there is no class body for fieldframe to read attribute names from.
 This style is better suited for messages built at runtime or from
 configuration data where the structure is not known at import time.
 
-`Download direct_message.py <https://github.com/yourname/fieldframe/blob/main/examples/direct_message.py>`_
+`View on GitHub <https://github.com/frasertoon/fieldframe/blob/main/examples/direct_message.py>`_
 
 ----
 
@@ -41,8 +41,8 @@ What this example covers
 Declarative vs direct — the only difference
 --------------------------------------------
 
-Both examples define an identical ``VehicleData`` message and perform the
-same operations. The only difference is how the message is constructed:
+Both message examples define an identical ``VehicleData`` message. The only
+difference is construction syntax:
 
 .. list-table::
    :header-rows: 1
@@ -64,34 +64,93 @@ same operations. The only difference is how the message is constructed:
 Message construction
 --------------------
 
-The message is built by passing a list of field instances to the
-:class:`~fieldframe.core.Message` constructor:
+The message is built by passing a list of field instances directly to the
+:class:`~fieldframe.core.Message` constructor. Every field requires an
+explicit ``name=`` argument:
 
-.. literalinclude:: ../../../examples/direct_message.py
-   :language: python
-   :start-after: # Direct instantiation -- field list passed to constructor
-   :end-before: # Setting values
-   :dedent: 0
+.. code-block:: python
+
+    from fieldframe import (
+        Message, Field, FlagsField, ScaledField, ComputedField,
+        uint_type, int_type, single_type, double_type, ascii_type, utf8_type,
+    )
+
+    msg = Message("VehicleData", [
+        Field(name="unit_id",     type=uint_type(8),   default=1),
+        Field(name="gear",        type=int_type(8),    default=0),
+        Field(name="fuel_level",  type=uint_type(8),   default=100),
+        Field(name="speed",       type=int_type(16),   default=0),
+        Field(name="engine_temp", type=single_type(),  default=0.0),
+        Field(name="odometer",    type=double_type(),  default=0.0),
+        Field(name="plate",       type=ascii_type(6),  default=""),
+        Field(name="label",       type=utf8_type(16),  default=""),
+        ScaledField(name="throttle", min_val=0.0, max_val=100.0, resolution=0.5),
+        FlagsField(name="status", type=uint_type(8),
+                   flags=["engine_on", "handbrake", "doors_locked", "lights_on"],
+                   lsb_first=True),
+        ComputedField(name="seqno",    type=uint_type(8), compute=increase,     default=0),
+        ComputedField(name="length",   type=uint_type(8), compute=msg_length,   default=0),
+        ComputedField(name="checksum", type=uint_type(8), compute=xor_checksum, default=0),
+    ])
 
 Setting values
 --------------
 
-The set styles are identical to the declarative example:
+The set styles are identical to the declarative example — construction style
+has no effect on how you interact with fields:
 
-.. literalinclude:: ../../../examples/direct_message.py
-   :language: python
-   :start-after: # Setting values -- all three styles work identically to the declarative style
-   :end-before: # Pretty print before encode
-   :dedent: 0
+.. code-block:: python
+
+    # 1. Direct .write attribute
+    msg.gear.write        = -1
+    msg.fuel_level.write  = 85
+    msg.engine_temp.write = 92.3
+
+    # 2. Item assignment
+    msg['unit_id']  = 7
+    msg['speed']    = -250
+    msg['plate']    = "ABC123"
+    msg['throttle'] = 22.5
+
+    # 3. .set() — multiple fields at once
+    msg.set(fuel_level=60, speed=8000, gear=3)
+
+    # FlagsField — attribute and item access
+    msg.status.engine_on          = True
+    msg['status']['doors_locked'] = True
+
+Encoding
+--------
+
+.. code-block:: python
+
+    bits = msg.encode()        # bit string
+    data = msg.encode_bytes()  # bytes, padded to byte boundary
+
+    print(msg.write_values)    # capture AFTER encode for computed fields
 
 Reading values
 --------------
 
-.. literalinclude:: ../../../examples/direct_message.py
-   :language: python
-   :start-after: # Reading values -- all styles
-   :end-before: # Pretty print after decode
-   :dedent: 0
+.. code-block:: python
+
+    msg.decode(bits)
+    msg.decode_bytes(data)
+
+    print(msg.fuel_level.read)      # .read attribute
+    print(msg['fuel_level'].read)   # item access
+
+    print(msg.read_values)          # all decoded values
+
+    print(msg.status.flag_reads)    # {name: bool} dict
+    print(msg.status.read)          # packed integer
+
+    print(msg.throttle.read)        # logical float
+    print(msg.throttle.read_raw)    # raw wire integer
+
+    print(msg.seqno.read)
+    print(msg.length.read)
+    print(msg.checksum.read)
 
 Full source
 -----------
