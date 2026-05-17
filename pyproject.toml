@@ -1,0 +1,91 @@
+[build-system]
+requires = ["hatchling"] 
+build-backend = "hatchling.build"
+
+[project]
+name = "fieldframe"
+version = "1.0.0"
+requires-python = ">=3.10"
+dependencies = [
+    "bitarray>=3.8.1",
+]
+
+authors = [{ name = "Fraser Toon", email = "fraser.w.toon@gmail.com" }]
+license = { text = "MIT" }
+
+description = "Bit-level binary message framing and protocol routing for embedded systems and hardware protocols"
+
+readme = { file = "README.md", content-type = "text/markdown" }
+
+keywords = [
+    "binary",
+    "protocol",
+    "serialization",
+    "embedded",
+    "message-framing",
+    "bitfield",
+    "can-bus",
+    "uart",
+    "spi",
+    "i2c",
+    "telemetry",
+    "packet",
+    "struct",
+    "encoding",
+    "decoding",
+]
+
+classifiers = [
+    # Development status
+    "Development Status :: 4 - Beta",
+
+    # Audience
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator",
+    "Topic :: System :: Networking",
+    "Topic :: Communications",
+
+    # License
+    "License :: OSI Approved :: MIT License",
+
+    # Python versions
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+
+    # OS
+    "Operating System :: OS Independent",
+
+    # Typing
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage      = "https://github.com/frasertoon/fieldframe"
+Documentation = "https://fieldframe.readthedocs.io"
+Repository    = "https://github.com/frasertoon/fieldframe"
+"Bug Tracker" = "https://github.com/frasertoon/fieldframe/issues"
+Changelog     = "https://github.com/frasertoon/fieldframe/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev   = ["pytest", "pytest-cov", "ruff"]
+docs  = ["sphinx", "furo"]
+build = ["build", "twine"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fieldframe"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
