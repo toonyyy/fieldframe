@@ -10,6 +10,7 @@ from fieldframe import StringType, ascii_type, utf8_type
 # StringType construction
 # ===========================================================================
 
+
 class TestStringTypeConstruction:
     def test_valid_defaults(self):
         t = StringType(length=8)
@@ -61,7 +62,9 @@ class TestStringTypeConstruction:
         assert StringType(length=8) != StringType(length=16)
 
     def test_different_encodings_not_equal(self):
-        assert StringType(length=8, encoding="ascii") != StringType(length=8, encoding="utf-8")
+        assert StringType(length=8, encoding="ascii") != StringType(
+            length=8, encoding="utf-8"
+        )
 
     def test_different_pads_not_equal(self):
         assert StringType(length=8, pad="\x00") != StringType(length=8, pad=" ")
@@ -70,6 +73,7 @@ class TestStringTypeConstruction:
 # ===========================================================================
 # bits property
 # ===========================================================================
+
 
 class TestStringTypeBits:
     def test_bits_is_length_times_8(self):
@@ -86,6 +90,7 @@ class TestStringTypeBits:
 # ===========================================================================
 # Validate
 # ===========================================================================
+
 
 class TestStringTypeValidate:
     def test_empty_string_valid(self):
@@ -145,17 +150,21 @@ class TestStringTypeValidate:
 # Encode / decode round-trips
 # ===========================================================================
 
+
 class TestStringTypeEncodeDecode:
-    @pytest.mark.parametrize("value,length,encoding,pad,endian", [
-        ("hello",  8, "ascii",  "\x00", "big"),
-        ("hello",  8, "ascii",  "\x00", "little"),
-        ("",       4, "ascii",  "\x00", "big"),
-        ("hi",     4, "ascii",  " ",    "big"),
-        ("test",   4, "ascii",  "\x00", "big"),
-        ("ABCDEF", 6, "ascii",  "\x00", "big"),
-        ("héllo",  8, "utf-8",  "\x00", "big"),
-        ("",       8, "utf-8",  "\x00", "little"),
-    ])
+    @pytest.mark.parametrize(
+        "value,length,encoding,pad,endian",
+        [
+            ("hello", 8, "ascii", "\x00", "big"),
+            ("hello", 8, "ascii", "\x00", "little"),
+            ("", 4, "ascii", "\x00", "big"),
+            ("hi", 4, "ascii", " ", "big"),
+            ("test", 4, "ascii", "\x00", "big"),
+            ("ABCDEF", 6, "ascii", "\x00", "big"),
+            ("héllo", 8, "utf-8", "\x00", "big"),
+            ("", 8, "utf-8", "\x00", "little"),
+        ],
+    )
     def test_round_trip(self, value, length, encoding, pad, endian):
         t = StringType(length=length, encoding=encoding, pad=pad)
         encoded = t.encode_bits(value, endian)
@@ -228,6 +237,7 @@ class TestStringTypeEncodeDecode:
 # Display
 # ===========================================================================
 
+
 class TestStringTypeDisplay:
     def test_str_ascii(self):
         assert str(StringType(length=8)) == "ascii/8"
@@ -256,6 +266,7 @@ class TestStringTypeDisplay:
 # ===========================================================================
 # Convenience factories
 # ===========================================================================
+
 
 class TestFactories:
     def test_ascii_type(self):

@@ -33,8 +33,15 @@ Covers
 """
 
 from fieldframe import (
-    Message, Field, FlagsField, ScaledField, ComputedField,
-    uint_type, int_type, single_type, ascii_type,
+    Message,
+    Field,
+    FlagsField,
+    ScaledField,
+    ComputedField,
+    uint_type,
+    int_type,
+    single_type,
+    ascii_type,
 )
 from fieldframe.protocols import Protocol
 
@@ -42,6 +49,7 @@ from fieldframe.protocols import Protocol
 # ---------------------------------------------------------------------------
 # ComputedField functions
 # ---------------------------------------------------------------------------
+
 
 def frame_crc(fields):
     """XOR of every integer write value in the frame except the CRC itself.
@@ -63,10 +71,7 @@ def frame_crc(fields):
 
 def payload_length(fields):
     """Payload length in bytes, excluding the length and crc fields."""
-    return sum(
-        f.length() for f in fields
-        if f.name not in ("length", "crc")
-    ) // 8
+    return sum(f.length() for f in fields if f.name not in ("length", "crc")) // 8
 
 
 # ---------------------------------------------------------------------------
@@ -74,69 +79,96 @@ def payload_length(fields):
 # ---------------------------------------------------------------------------
 
 # -- Header ---------------------------------------------------------------
-header = Message("Header", [
-    Field(name="msg_id",  type=uint_type(8), default=0),  # routing key
-    Field(name="ecu_id",  type=uint_type(8), default=0),  # sending ECU identifier
-    Field(name="version", type=uint_type(4), default=1),  # protocol version
-])
+header = Message(
+    "Header",
+    [
+        Field(name="msg_id", type=uint_type(8), default=0),  # routing key
+        Field(name="ecu_id", type=uint_type(8), default=0),  # sending ECU identifier
+        Field(name="version", type=uint_type(4), default=1),  # protocol version
+    ],
+)
 
 # -- 1. Heartbeat ---------------------------------------------------------
-heartbeat = Message("Heartbeat", [
-    Field(name="unit_id", type=uint_type(8),  default=1),
-    Field(name="uptime",  type=uint_type(32), default=0),   # seconds since ignition
-    Field(name="vin",     type=ascii_type(6), default=""),  # 6-char VIN fragment
-    FlagsField(
-        name="state",
-        type=uint_type(8),
-        flags=["online", "healthy", "busy", "degraded"],
-    ),
-    ComputedField(name="crc", type=uint_type(8), compute=frame_crc, default=0),
-])
+heartbeat = Message(
+    "Heartbeat",
+    [
+        Field(name="unit_id", type=uint_type(8), default=1),
+        Field(name="uptime", type=uint_type(32), default=0),  # seconds since ignition
+        Field(name="vin", type=ascii_type(6), default=""),  # 6-char VIN fragment
+        FlagsField(
+            name="state",
+            type=uint_type(8),
+            flags=["online", "healthy", "busy", "degraded"],
+        ),
+        ComputedField(name="crc", type=uint_type(8), compute=frame_crc, default=0),
+    ],
+)
 
 # -- 2. VehicleStatus -----------------------------------------------------
-vehicle_status = Message("VehicleStatus", [
-    FlagsField(
-        name="flags",
-        type=uint_type(8),
-        flags=["engine_on", "handbrake", "doors_locked", "lights_on"],
-    ),
-    Field(name="speed",    type=uint_type(8),  default=0),   # km/h
-    Field(name="rpm",      type=uint_type(16), default=0),
-    Field(name="fuel_pct", type=uint_type(8),  default=100), # 0-100 %
-    Field(name="gear",     type=int_type(8),   default=0),   # signed -- reverse is negative
-    ComputedField(name="crc", type=uint_type(8), compute=frame_crc, default=0),
-])
+vehicle_status = Message(
+    "VehicleStatus",
+    [
+        FlagsField(
+            name="flags",
+            type=uint_type(8),
+            flags=["engine_on", "handbrake", "doors_locked", "lights_on"],
+        ),
+        Field(name="speed", type=uint_type(8), default=0),  # km/h
+        Field(name="rpm", type=uint_type(16), default=0),
+        Field(name="fuel_pct", type=uint_type(8), default=100),  # 0-100 %
+        Field(
+            name="gear", type=int_type(8), default=0
+        ),  # signed -- reverse is negative
+        ComputedField(name="crc", type=uint_type(8), compute=frame_crc, default=0),
+    ],
+)
 
 # -- 3. GpsPosition -------------------------------------------------------
-gps_position = Message("GpsPosition", [
-    Field(name="latitude",   type=single_type(), default=0.0),  # float32 degrees
-    Field(name="longitude",  type=single_type(), default=0.0),  # float32 degrees
-    Field(name="altitude_m", type=uint_type(16), default=0),
-    Field(name="satellites", type=uint_type(8),  default=0),
-    Field(name="hdop",       type=uint_type(8),  default=0),    # x10 fixed-point
-    ComputedField(name="crc", type=uint_type(8), compute=frame_crc, default=0),
-])
+gps_position = Message(
+    "GpsPosition",
+    [
+        Field(name="latitude", type=single_type(), default=0.0),  # float32 degrees
+        Field(name="longitude", type=single_type(), default=0.0),  # float32 degrees
+        Field(name="altitude_m", type=uint_type(16), default=0),
+        Field(name="satellites", type=uint_type(8), default=0),
+        Field(name="hdop", type=uint_type(8), default=0),  # x10 fixed-point
+        ComputedField(name="crc", type=uint_type(8), compute=frame_crc, default=0),
+    ],
+)
 
 # -- 4. WheelCommand -- little-endian CAN-style frame ---------------------
-wheel_command = Message("WheelCommand", [
-    Field(name="wheel_id",  type=uint_type(4), default=0),  # sub-byte: 0-3 per corner
-    Field(name="direction", type=int_type(8),  default=0),  # signed -- reverse is negative
-    ScaledField(name="torque", min_val=0.0, max_val=100.0, resolution=0.5),
-    ComputedField(name="crc", type=uint_type(8), compute=frame_crc, default=0),
-], endian="little")
+wheel_command = Message(
+    "WheelCommand",
+    [
+        Field(
+            name="wheel_id", type=uint_type(4), default=0
+        ),  # sub-byte: 0-3 per corner
+        Field(
+            name="direction", type=int_type(8), default=0
+        ),  # signed -- reverse is negative
+        ScaledField(name="torque", min_val=0.0, max_val=100.0, resolution=0.5),
+        ComputedField(name="crc", type=uint_type(8), compute=frame_crc, default=0),
+    ],
+    endian="little",
+)
 
 # -- 5. DiagnosticLog -----------------------------------------------------
-diagnostic_log = Message("DiagnosticLog", [
-    Field(name="timestamp",    type=uint_type(32), default=0),
-    Field(name="engine_temp",  type=int_type(16),  default=0),   # signed, 0.01 degC
-    Field(name="oil_pressure", type=uint_type(16), default=0),   # kPa
-    Field(name="battery_mv",   type=uint_type(16), default=0),   # millivolts
-    Field(name="intake_temp",  type=int_type(8),   default=0),   # signed degC
-    Field(name="throttle_pos", type=uint_type(8),  default=0),   # 0-100 %
-    Field(name="brake_press",  type=uint_type(8),  default=0),   # 0-100 %
-    ComputedField(name="length", type=uint_type(8), compute=payload_length, default=0),
-    ComputedField(name="crc",    type=uint_type(8), compute=frame_crc,      default=0),
-])
+diagnostic_log = Message(
+    "DiagnosticLog",
+    [
+        Field(name="timestamp", type=uint_type(32), default=0),
+        Field(name="engine_temp", type=int_type(16), default=0),  # signed, 0.01 degC
+        Field(name="oil_pressure", type=uint_type(16), default=0),  # kPa
+        Field(name="battery_mv", type=uint_type(16), default=0),  # millivolts
+        Field(name="intake_temp", type=int_type(8), default=0),  # signed degC
+        Field(name="throttle_pos", type=uint_type(8), default=0),  # 0-100 %
+        Field(name="brake_press", type=uint_type(8), default=0),  # 0-100 %
+        ComputedField(
+            name="length", type=uint_type(8), compute=payload_length, default=0
+        ),
+        ComputedField(name="crc", type=uint_type(8), compute=frame_crc, default=0),
+    ],
+)
 
 # ---------------------------------------------------------------------------
 # Instantiate the protocol directly
@@ -163,15 +195,15 @@ protocol = Protocol(
 # -- the registered instance already has the header injected, so the crc
 # field sees the full frame including header fields.
 hb = protocol.messages["1"]
-hb.unit_id.write  = 3
-hb.uptime.write   = 7200        # 2 hours since ignition
-hb['vin']         = "1HGCM8"
-hb.state.online   = True
-hb.state.healthy  = True
-hb.state.busy     = False
+hb.unit_id.write = 3
+hb.uptime.write = 7200  # 2 hours since ignition
+hb["vin"] = "1HGCM8"
+hb.state.online = True
+hb.state.healthy = True
+hb.state.busy = False
 hb.state.degraded = False
 
-bits   = hb.encode()
+bits = hb.encode()
 result = protocol.decode(bits)
 
 # Capture write_values AFTER encode so crc reflects the just-computed value
@@ -186,12 +218,12 @@ print("Decoded:", result)
 # ---------------------------------------------------------------------------
 
 gps = protocol.messages["3"]
-gps.latitude.write  = -33.8688   # Sydney
+gps.latitude.write = -33.8688  # Sydney
 gps.longitude.write = 151.2093
-gps['altitude_m']   = 58
+gps["altitude_m"] = 58
 gps.set(satellites=11, hdop=8)
 
-bits   = gps.encode()
+bits = gps.encode()
 result = protocol.decode(bits)
 
 print("\n" + "=" * 60)
@@ -205,11 +237,11 @@ print("Decoded:", result)
 # ---------------------------------------------------------------------------
 
 wc = protocol.messages["4"]
-wc.wheel_id.write  = 2          # rear-right
-wc.direction.write = -1         # signed -- braking/reverse
-wc['torque']       = 45.0       # ScaledField via item access
+wc.wheel_id.write = 2  # rear-right
+wc.direction.write = -1  # signed -- braking/reverse
+wc["torque"] = 45.0  # ScaledField via item access
 
-bits   = wc.encode()
+bits = wc.encode()
 result = protocol.decode(bits)
 
 print("\n" + "=" * 60)
@@ -223,13 +255,13 @@ print("Decoded:", result)
 # ---------------------------------------------------------------------------
 
 dl = protocol.get_message("DiagnosticLog")
-dl['timestamp']    = 1_700_000_000
-dl['engine_temp']  = 9230                   # 92.30 degC in 0.01 degC units
-dl['oil_pressure'] = 280                    # kPa
-dl['battery_mv']   = 12650                  # 12.65 V in millivolts
+dl["timestamp"] = 1_700_000_000
+dl["engine_temp"] = 9230  # 92.30 degC in 0.01 degC units
+dl["oil_pressure"] = 280  # kPa
+dl["battery_mv"] = 12650  # 12.65 V in millivolts
 dl.set(intake_temp=35, throttle_pos=42, brake_press=0)
 
-bits   = dl.encode()
+bits = dl.encode()
 result = protocol.decode(bits)
 
 print("\n" + "=" * 60)

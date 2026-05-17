@@ -5,12 +5,19 @@ Tests for fieldframe.types.float
 import math
 import struct
 import pytest
-from fieldframe.types.float import FloatType, float_type, half_type, single_type, double_type
+from fieldframe.types.float import (
+    FloatType,
+    float_type,
+    half_type,
+    single_type,
+    double_type,
+)
 
 
 # ===========================================================================
 # FloatType construction
 # ===========================================================================
+
 
 class TestFloatTypeConstruction:
     def test_valid_16(self):
@@ -62,6 +69,7 @@ class TestFloatTypeConstruction:
 # Range properties
 # ===========================================================================
 
+
 class TestFloatTypeRange:
     def test_float16_max(self):
         t = FloatType(bits=16)
@@ -95,6 +103,7 @@ class TestFloatTypeRange:
 # ===========================================================================
 # Validate
 # ===========================================================================
+
 
 class TestFloatTypeValidate:
     def test_valid_zero(self):
@@ -166,22 +175,26 @@ class TestFloatTypeValidate:
 # Encode / decode round-trips
 # ===========================================================================
 
+
 class TestFloatTypeEncodeDecode:
-    @pytest.mark.parametrize("value,bits,endian", [
-        (0.0,    16, "big"),
-        (0.0,    16, "little"),
-        (1.0,    16, "big"),
-        (1.0,    16, "little"),
-        (-1.0,   16, "big"),
-        (-1.0,   16, "little"),
-        (3.14,   32, "big"),
-        (3.14,   32, "little"),
-        (-273.15, 32, "big"),
-        (-273.15, 32, "little"),
-        (1.23456789, 64, "big"),
-        (1.23456789, 64, "little"),
-        (0.0,    64, "big"),
-    ])
+    @pytest.mark.parametrize(
+        "value,bits,endian",
+        [
+            (0.0, 16, "big"),
+            (0.0, 16, "little"),
+            (1.0, 16, "big"),
+            (1.0, 16, "little"),
+            (-1.0, 16, "big"),
+            (-1.0, 16, "little"),
+            (3.14, 32, "big"),
+            (3.14, 32, "little"),
+            (-273.15, 32, "big"),
+            (-273.15, 32, "little"),
+            (1.23456789, 64, "big"),
+            (1.23456789, 64, "little"),
+            (0.0, 64, "big"),
+        ],
+    )
     def test_round_trip(self, value, bits, endian):
         t = FloatType(bits=bits)
         encoded = t.encode_bits(value, endian)
@@ -234,6 +247,7 @@ class TestFloatTypeEncodeDecode:
 # Display
 # ===========================================================================
 
+
 class TestFloatTypeDisplay:
     def test_str_float16(self):
         assert str(FloatType(bits=16)) == "float16"
@@ -258,6 +272,7 @@ class TestFloatTypeDisplay:
 # ===========================================================================
 # Convenience factories
 # ===========================================================================
+
 
 class TestFactories:
     def test_float_type_32(self):

@@ -105,20 +105,18 @@ class ScaledField(FrameComponent):
 
     def __init__(
         self,
-        min_val:    float,
-        max_val:    float,
+        min_val: float,
+        max_val: float,
         resolution: float,
-        name:       str = None,
-        default:    float = None,
+        name: str = None,
+        default: float = None,
     ) -> None:
         if min_val >= max_val:
             raise ValueError(
                 f"min_val ({min_val}) must be less than max_val ({max_val})"
             )
         if resolution <= 0:
-            raise ValueError(
-                f"resolution must be > 0, got {resolution}"
-            )
+            raise ValueError(f"resolution must be > 0, got {resolution}")
 
         steps = round((max_val - min_val) / resolution)
         if steps < 1:
@@ -129,18 +127,18 @@ class ScaledField(FrameComponent):
 
         bits = max(1, math.ceil(math.log2(steps + 1)))
 
-        self.name       = name
-        self.min_val    = float(min_val)
-        self.max_val    = float(max_val)
+        self.name = name
+        self.min_val = float(min_val)
+        self.max_val = float(max_val)
         self.resolution = float(resolution)
-        self.steps      = steps
-        self._int_type  = uint_type(bits)
+        self.steps = steps
+        self._int_type = uint_type(bits)
 
         # Derive decimal places from resolution for clean round-trip display
         self._dp = self._decimal_places()
 
-        self.read:     float | None = None
-        self.read_raw: int   | None = None
+        self.read: float | None = None
+        self.read_raw: int | None = None
 
         # Set write via property so validation runs
         self._write: float = self.min_val
@@ -160,8 +158,10 @@ class ScaledField(FrameComponent):
         class _Display:
             def __init__(self, bits):
                 self.bits = bits
+
             def __str__(self):
                 return f"scaled/{self.bits}b"
+
         return _Display(self._int_type.bits)
 
     def length(self) -> int:
@@ -200,7 +200,7 @@ class ScaledField(FrameComponent):
             The decoded logical value (also stored in :attr:`read`).
         """
         self.read_raw = self._int_type.decode_bits(bit_str, endian)
-        self.read     = self._to_float(self.read_raw)
+        self.read = self._to_float(self.read_raw)
         return self.read
 
     # ------------------------------------------------------------------
@@ -259,25 +259,25 @@ class ScaledField(FrameComponent):
     # ------------------------------------------------------------------
 
     def _format(self, indent: int = 0) -> str:
-        pad   = "    " * indent
-        bar   = "│"
+        pad = "    " * indent
+        bar = "│"
         width = 28
 
         def row(label, value):
             return f"{pad}{bar}  {label:<12}{str(value):<{width}}{bar}"
 
-        read_str     = "—" if self.read     is None else str(self.read)
+        read_str = "—" if self.read is None else str(self.read)
         read_raw_str = "—" if self.read_raw is None else str(self.read_raw)
-        wire_int     = self._to_int(self._write)
+        wire_int = self._to_int(self._write)
 
         lines = [
             f"{pad}┌─ ScaledField {'─' * (width + 6)}┐",
-            row("name",       self.name or "(unnamed)"),
-            row("range",      f"[{self.min_val}, {self.max_val}]"),
+            row("name", self.name or "(unnamed)"),
+            row("range", f"[{self.min_val}, {self.max_val}]"),
             row("resolution", self.resolution),
-            row("steps",      f"{self.steps}  ({self._int_type.bits}-bit wire)"),
-            row("write",      f"{self._write}  (wire={wire_int})"),
-            row("read",       f"{read_str}  (wire={read_raw_str})"),
+            row("steps", f"{self.steps}  ({self._int_type.bits}-bit wire)"),
+            row("write", f"{self._write}  (wire={wire_int})"),
+            row("read", f"{read_str}  (wire={read_raw_str})"),
             f"{pad}└{'─' * (width + 16)}┘",
         ]
         return "\n".join(lines)

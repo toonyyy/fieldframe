@@ -13,6 +13,7 @@ from fieldframe.types.string import StringType
 # Construction
 # ===========================================================================
 
+
 class TestFieldConstruction:
     def test_name_is_none_by_default(self):
         f = Field(type=uint_type(8))
@@ -65,6 +66,7 @@ class TestFieldConstruction:
 # length()
 # ===========================================================================
 
+
 class TestFieldLength:
     def test_length_uint8(self):
         assert Field(type=uint_type(8)).length() == 8
@@ -91,6 +93,7 @@ class TestFieldLength:
 # ===========================================================================
 # write property
 # ===========================================================================
+
 
 class TestFieldWriteProperty:
     def test_write_setter_valid_value(self):
@@ -168,20 +171,24 @@ class TestFieldWriteProperty:
 # _encode_bits / _decode_bits
 # ===========================================================================
 
+
 class TestFieldEncodeDecode:
-    @pytest.mark.parametrize("value,bits,signed,endian", [
-        (0,     8,  False, "big"),
-        (255,   8,  False, "big"),
-        (0,     8,  False, "little"),
-        (-128,  8,  True,  "big"),
-        (127,   8,  True,  "big"),
-        (-1,    8,  True,  "little"),
-        (1000,  16, False, "big"),
-        (1000,  16, False, "little"),
-        (-32768, 16, True,  "big"),
-        (0,     32, False, "big"),
-        (0,     32, False, "little"),
-    ])
+    @pytest.mark.parametrize(
+        "value,bits,signed,endian",
+        [
+            (0, 8, False, "big"),
+            (255, 8, False, "big"),
+            (0, 8, False, "little"),
+            (-128, 8, True, "big"),
+            (127, 8, True, "big"),
+            (-1, 8, True, "little"),
+            (1000, 16, False, "big"),
+            (1000, 16, False, "little"),
+            (-32768, 16, True, "big"),
+            (0, 32, False, "big"),
+            (0, 32, False, "little"),
+        ],
+    )
     def test_int_round_trip(self, value, bits, signed, endian):
         t = IntType(bits=bits, signed=signed)
         f = Field(type=t, default=t.min_value)
@@ -260,6 +267,7 @@ class TestFieldEncodeDecode:
 # ===========================================================================
 # Display
 # ===========================================================================
+
 
 class TestFieldDisplay:
     def test_repr_contains_name(self):

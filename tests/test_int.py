@@ -10,6 +10,7 @@ from fieldframe.types.int import IntType, int_type, uint_type
 # IntType construction
 # ===========================================================================
 
+
 class TestIntTypeConstruction:
     def test_valid_unsigned(self):
         t = IntType(bits=8, signed=False)
@@ -69,22 +70,29 @@ class TestIntTypeConstruction:
 # Range properties
 # ===========================================================================
 
+
 class TestIntTypeRange:
-    @pytest.mark.parametrize("bits,expected_min,expected_max", [
-        (8,  -128,       127),
-        (16, -32768,     32767),
-        (32, -2147483648, 2147483647),
-    ])
+    @pytest.mark.parametrize(
+        "bits,expected_min,expected_max",
+        [
+            (8, -128, 127),
+            (16, -32768, 32767),
+            (32, -2147483648, 2147483647),
+        ],
+    )
     def test_signed_range(self, bits, expected_min, expected_max):
         t = IntType(bits=bits, signed=True)
         assert t.min_value == expected_min
         assert t.max_value == expected_max
 
-    @pytest.mark.parametrize("bits,expected_max", [
-        (8,  255),
-        (16, 65535),
-        (32, 4294967295),
-    ])
+    @pytest.mark.parametrize(
+        "bits,expected_max",
+        [
+            (8, 255),
+            (16, 65535),
+            (32, 4294967295),
+        ],
+    )
     def test_unsigned_range(self, bits, expected_max):
         t = IntType(bits=bits, signed=False)
         assert t.min_value == 0
@@ -94,6 +102,7 @@ class TestIntTypeRange:
 # ===========================================================================
 # Validate
 # ===========================================================================
+
 
 class TestIntTypeValidate:
     def test_valid_value_returns_true(self):
@@ -143,21 +152,25 @@ class TestIntTypeValidate:
 # Encode / decode round-trips
 # ===========================================================================
 
+
 class TestIntTypeEncodeDecode:
-    @pytest.mark.parametrize("value,bits,signed,endian", [
-        (0,    8,  False, "big"),
-        (255,  8,  False, "big"),
-        (0,    8,  False, "little"),
-        (255,  8,  False, "little"),
-        (-128, 8,  True,  "big"),
-        (127,  8,  True,  "big"),
-        (1000, 16, False, "big"),
-        (1000, 16, False, "little"),
-        (-1,   16, True,  "big"),
-        (-1,   16, True,  "little"),
-        (0,    32, True,  "big"),
-        (0,    32, True,  "little"),
-    ])
+    @pytest.mark.parametrize(
+        "value,bits,signed,endian",
+        [
+            (0, 8, False, "big"),
+            (255, 8, False, "big"),
+            (0, 8, False, "little"),
+            (255, 8, False, "little"),
+            (-128, 8, True, "big"),
+            (127, 8, True, "big"),
+            (1000, 16, False, "big"),
+            (1000, 16, False, "little"),
+            (-1, 16, True, "big"),
+            (-1, 16, True, "little"),
+            (0, 32, True, "big"),
+            (0, 32, True, "little"),
+        ],
+    )
     def test_round_trip(self, value, bits, signed, endian):
         t = IntType(bits=bits, signed=signed)
         encoded = t.encode_bits(value, endian)
@@ -198,6 +211,7 @@ class TestIntTypeEncodeDecode:
 # Display
 # ===========================================================================
 
+
 class TestIntTypeDisplay:
     def test_str_unsigned(self):
         assert str(IntType(bits=8, signed=False)) == "uint8"
@@ -221,6 +235,7 @@ class TestIntTypeDisplay:
 # ===========================================================================
 # Convenience factories
 # ===========================================================================
+
 
 class TestFactories:
     def test_int_type_is_signed(self):

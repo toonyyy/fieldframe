@@ -103,15 +103,15 @@ class Protocol:
     # Declarative subclass support
     # ------------------------------------------------------------------
 
-    _proto_key:          str | None  = None
-    _proto_name:         str | None  = None
-    _proto_header_cls:   type | None = None
-    _proto_footer_cls:   type | None = None
-    _proto_message_clss: dict        = {}
+    _proto_key: str | None = None
+    _proto_name: str | None = None
+    _proto_header_cls: type | None = None
+    _proto_footer_cls: type | None = None
+    _proto_message_clss: dict = {}
 
     def __init_subclass__(
         cls,
-        key:  str = None,
+        key: str = None,
         name: str = None,
         **kwargs,
     ) -> None:
@@ -134,12 +134,12 @@ class Protocol:
         """
         super().__init_subclass__(**kwargs)
 
-        cls._proto_key  = key
+        cls._proto_key = key
         cls._proto_name = name
 
-        cls._proto_header_cls    = None
-        cls._proto_footer_cls    = None
-        cls._proto_message_clss  = {}
+        cls._proto_header_cls = None
+        cls._proto_footer_cls = None
+        cls._proto_message_clss = {}
 
         for attr_name, val in cls.__dict__.items():
             if not isinstance(val, type) or not issubclass(val, Message):
@@ -156,25 +156,25 @@ class Protocol:
     # ------------------------------------------------------------------
 
     def __init__(
-            self,
-            name:     str                  = None,
-            messages: dict[str, Message]   = None,
-            header:   Message              = None,
-            key:      str                  = None,
-            footer:   Message | None       = None,
+        self,
+        name: str = None,
+        messages: dict[str, Message] = None,
+        header: Message = None,
+        key: str = None,
+        footer: Message | None = None,
     ) -> None:
         cls = self.__class__
 
-        if header   is None and cls._proto_header_cls is not None:
-            header   = cls._proto_header_cls()
+        if header is None and cls._proto_header_cls is not None:
+            header = cls._proto_header_cls()
         if messages is None and cls._proto_message_clss:
             messages = {k: v() for k, v in cls._proto_message_clss.items()}
-        if key      is None and cls._proto_key is not None:
-            key      = cls._proto_key
-        if name     is None:
-            name     = cls._proto_name or cls.__name__
-        if footer   is None and cls._proto_footer_cls is not None:
-            footer   = cls._proto_footer_cls()
+        if key is None and cls._proto_key is not None:
+            key = cls._proto_key
+        if name is None:
+            name = cls._proto_name or cls.__name__
+        if footer is None and cls._proto_footer_cls is not None:
+            footer = cls._proto_footer_cls()
 
         self._initialised = False
 
@@ -381,7 +381,7 @@ class Protocol:
             >>> result["altitude"]
             300
         """
-        res = self.header.decode(bit_str[0:self.header.length()])
+        res = self.header.decode(bit_str[0 : self.header.length()])
         key_value = res.get(self.key, None)
 
         if key_value is None:

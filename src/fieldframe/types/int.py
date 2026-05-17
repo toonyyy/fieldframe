@@ -47,7 +47,7 @@ class IntType:
     IntType(int16  range=[-32768, 32767])
     """
 
-    bits:   int
+    bits: int
     signed: bool
 
     def __post_init__(self) -> None:
@@ -68,7 +68,7 @@ class IntType:
     @property
     def max_value(self) -> int:
         """Maximum representable value for this type."""
-        return (2 ** (self.bits - 1)) - 1 if self.signed else (2 ** self.bits) - 1
+        return (2 ** (self.bits - 1)) - 1 if self.signed else (2**self.bits) - 1
 
     # ------------------------------------------------------------------
     # Validation
@@ -95,9 +95,7 @@ class IntType:
             If *value* is outside ``[min_value, max_value]``.
         """
         if not isinstance(value, int):
-            raise TypeError(
-                f"Expected int, got {type(value).__name__!r}"
-            )
+            raise TypeError(f"Expected int, got {type(value).__name__!r}")
         if not (self.min_value <= value <= self.max_value):
             raise ValueError(
                 f"{value} is out of range for {self} "
@@ -135,7 +133,7 @@ class IntType:
         ).to01()
 
         if endian == "little" and self.bits > 8:
-            chunks = [raw[i:i + 8] for i in range(0, len(raw), 8)]
+            chunks = [raw[i : i + 8] for i in range(0, len(raw), 8)]
             return "".join(reversed(chunks))
 
         return raw
@@ -159,7 +157,7 @@ class IntType:
         from bitarray.util import ba2int
 
         if endian == "little" and len(bit_str) > 8:
-            chunks = [bit_str[i:i + 8] for i in range(0, len(bit_str), 8)]
+            chunks = [bit_str[i : i + 8] for i in range(0, len(bit_str), 8)]
             bit_str = "".join(reversed(chunks))
 
         return ba2int(bitarray(bit_str), signed=self.signed)
@@ -180,15 +178,13 @@ class IntType:
 
             IntType(uint8  range=[0, 255])
         """
-        return (
-            f"IntType({self!s:<6} "
-            f"range=[{self.min_value}, {self.max_value}])"
-        )
+        return f"IntType({self!s:<6} range=[{self.min_value}, {self.max_value}])"
 
 
 # ---------------------------------------------------------------------------
 # Convenience factories
 # ---------------------------------------------------------------------------
+
 
 def int_type(bits: int) -> IntType:
     """Create a signed two's-complement :class:`IntType`.

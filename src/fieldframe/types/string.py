@@ -39,6 +39,7 @@ from dataclasses import dataclass
 # Descriptor
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class StringType:
     """Immutable descriptor for a fixed-width string field.
@@ -69,15 +70,13 @@ class StringType:
     StringType(utf-8  16 bytes  pad= )
     """
 
-    length:   int
+    length: int
     encoding: str = "ascii"
-    pad:      str = "\x00"
+    pad: str = "\x00"
 
     def __post_init__(self) -> None:
         if self.length < 1:
-            raise ValueError(
-                f"StringType length must be >= 1, got {self.length}"
-            )
+            raise ValueError(f"StringType length must be >= 1, got {self.length}")
         try:
             pad_bytes = self.pad.encode(self.encoding)
         except (UnicodeEncodeError, LookupError) as exc:
@@ -125,9 +124,7 @@ class StringType:
             the configured *encoding*.
         """
         if not isinstance(value, str):
-            raise TypeError(
-                f"Expected str, got {type(value).__name__!r}"
-            )
+            raise TypeError(f"Expected str, got {type(value).__name__!r}")
         try:
             encoded = value.encode(self.encoding)
         except UnicodeEncodeError as exc:
@@ -164,7 +161,7 @@ class StringType:
         str
             Bit string of length :attr:`bits`.
         """
-        raw   = value.encode(self.encoding)
+        raw = value.encode(self.encoding)
         pad_b = self.pad.encode(self.encoding)
 
         # Pad to the full field width
@@ -190,10 +187,7 @@ class StringType:
         str
             Decoded and pad-stripped string.
         """
-        raw_bytes = bytes(
-            int(bit_str[i:i + 8], 2)
-            for i in range(0, len(bit_str), 8)
-        )
+        raw_bytes = bytes(int(bit_str[i : i + 8], 2) for i in range(0, len(bit_str), 8))
 
         decoded = raw_bytes.decode(self.encoding, errors="replace")
 
@@ -216,16 +210,13 @@ class StringType:
             StringType(ascii  8 bytes  pad=\\x00)
         """
         pad_repr = repr(self.pad) if self.pad == "\x00" else self.pad
-        return (
-            f"StringType({self.encoding:<8} "
-            f"{self.length} bytes  "
-            f"pad={pad_repr})"
-        )
+        return f"StringType({self.encoding:<8} {self.length} bytes  pad={pad_repr})"
 
 
 # ---------------------------------------------------------------------------
 # Convenience factories
 # ---------------------------------------------------------------------------
+
 
 def str_type(length: int, pad: str = "\x00") -> StringType:
     """Create an ASCII :class:`StringType` of *length* bytes.

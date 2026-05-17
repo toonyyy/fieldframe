@@ -66,18 +66,19 @@ class ComputedField(FrameComponent):
 
     def __init__(
         self,
-        name:    str     = None,
-        type:    IntType = None,
-        compute          = None,
-        default: int     = 0,
+        name: str = None,
+        type: IntType = None,
+        compute=None,
+        default: int = 0,
     ) -> None:
         from fieldframe.types.int import uint_type as _uint8
-        self.name    = name
-        self.type    = type or _uint8(8)
+
+        self.name = name
+        self.type = type or _uint8(8)
         self.compute = compute
         self.default = default
-        self._write: int        = default
-        self.read:   int | None = None
+        self._write: int = default
+        self.read: int | None = None
 
     # ------------------------------------------------------------------
     # write property — reflects last computed value (or default)
@@ -121,7 +122,7 @@ class ComputedField(FrameComponent):
         """
         value = self.compute(fields or [])
         self.type.validate(value)
-        self._write = value                 # persist so next encode can reference it
+        self._write = value  # persist so next encode can reference it
         return self.type.encode_bits(value, endian)
 
     def _decode_bits(self, bit_str: str, endian: str) -> int:
@@ -152,8 +153,8 @@ class ComputedField(FrameComponent):
 
     def _format(self, indent: int = 0) -> str:
         """Return an indented, box-drawn string for nested display."""
-        pad   = "    " * indent
-        bar   = "│"
+        pad = "    " * indent
+        bar = "│"
         width = 28
 
         def row(label, value):
@@ -161,12 +162,15 @@ class ComputedField(FrameComponent):
 
         lines = [
             f"{pad}┌─ ComputedField {'─' * (width + 6)}┐",
-            row("name",    self.name or "(unnamed)"),
-            row("type",    self.type),
-            row("fn",      self.compute.__name__ if hasattr(self.compute, "__name__") else "λ"),
+            row("name", self.name or "(unnamed)"),
+            row("type", self.type),
+            row(
+                "fn",
+                self.compute.__name__ if hasattr(self.compute, "__name__") else "λ",
+            ),
             row("default", self.default),
-            row("write",   self._write),
-            row("read",    self.read if self.read is not None else "—"),
+            row("write", self._write),
+            row("read", self.read if self.read is not None else "—"),
             f"{pad}└{'─' * (width + 14)}┘",
         ]
         return "\n".join(lines)
@@ -182,7 +186,7 @@ class ComputedField(FrameComponent):
 
             ComputedField(checksum, uint8, fn=xor_checksum, read=None)
         """
-        fn_name  = getattr(self.compute, "__name__", "λ")
+        fn_name = getattr(self.compute, "__name__", "λ")
         read_str = "—" if self.read is None else str(self.read)
         return (
             f"ComputedField({self.name or '?'}, {self.type}, "
