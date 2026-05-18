@@ -11,6 +11,7 @@ from fieldframe.types.int import uint_type, int_type
 # Construction
 # ===========================================================================
 
+
 class TestFlagsFieldConstruction:
     def test_name_is_none_by_default(self):
         ff = FlagsField(type=uint_type(8), flags=["a", "b"])
@@ -65,6 +66,7 @@ class TestFlagsFieldConstruction:
 # length()
 # ===========================================================================
 
+
 class TestFlagsFieldLength:
     def test_length_uint8(self):
         assert FlagsField(type=uint_type(8), flags=["a"]).length() == 8
@@ -79,6 +81,7 @@ class TestFlagsFieldLength:
 # ===========================================================================
 # Attribute access — ff.flag_name / ff.flag_name = True
 # ===========================================================================
+
 
 class TestFlagsFieldAttributeAccess:
     def test_getattr_returns_falsy_proxy_initially(self):
@@ -110,13 +113,13 @@ class TestFlagsFieldAttributeAccess:
 
     def test_setattr_truthy_coerced_to_true(self):
         ff = FlagsField(type=uint_type(8), flags=["a"])
-        ff.a = 42        # truthy non-bool
+        ff.a = 42  # truthy non-bool
         assert ff["a"] is True
 
     def test_setattr_falsy_coerced_to_false(self):
         ff = FlagsField(type=uint_type(8), flags=["a"])
         ff.a = True
-        ff.a = 0         # falsy
+        ff.a = 0  # falsy
         assert ff["a"] is False
 
     def test_set_then_clear_flag(self):
@@ -129,6 +132,7 @@ class TestFlagsFieldAttributeAccess:
 # ===========================================================================
 # Item access — ff["flag"] / ff["flag"] = True
 # ===========================================================================
+
 
 class TestFlagsFieldItemAccess:
     def test_getitem_initially_false(self):
@@ -167,6 +171,7 @@ class TestFlagsFieldItemAccess:
 # write / read / flag_writes / flag_reads properties
 # ===========================================================================
 
+
 class TestFlagsFieldProperties:
     def test_write_all_false_is_zero(self):
         ff = FlagsField(type=uint_type(8), flags=["a", "b", "c"])
@@ -186,19 +191,19 @@ class TestFlagsFieldProperties:
 
     def test_write_multiple_flags(self):
         ff = FlagsField(type=uint_type(8), flags=["armed", "locked"])
-        ff.armed  = True
+        ff.armed = True
         ff.locked = True
         assert ff.write == 192  # 128 + 64
 
     def test_write_lsb_first_flag_zero(self):
         ff = FlagsField(type=uint_type(8), flags=["a", "b"], lsb_first=True)
         ff.a = True
-        assert ff.write == 1   # bit 0
+        assert ff.write == 1  # bit 0
 
     def test_write_lsb_first_second_flag(self):
         ff = FlagsField(type=uint_type(8), flags=["a", "b"], lsb_first=True)
         ff.b = True
-        assert ff.write == 2   # bit 1
+        assert ff.write == 2  # bit 1
 
     def test_read_none_before_decode(self):
         ff = FlagsField(type=uint_type(8), flags=["a"])
@@ -209,7 +214,7 @@ class TestFlagsFieldProperties:
         ff.a = True
         fw = ff.flag_writes
         assert fw == {"a": True, "b": False}
-        fw["a"] = False          # mutating copy must not affect field
+        fw["a"] = False  # mutating copy must not affect field
         assert ff["a"] is True
 
     def test_flag_reads_before_decode_all_false(self):
@@ -227,9 +232,12 @@ class TestFlagsFieldProperties:
 # _encode_bits / _decode_bits
 # ===========================================================================
 
+
 class TestFlagsFieldEncodeDecode:
     def test_encode_all_false_is_all_zeros(self):
-        ff = FlagsField(type=uint_type(8), flags=["a","b","c","d","e","f","g","h"])
+        ff = FlagsField(
+            type=uint_type(8), flags=["a", "b", "c", "d", "e", "f", "g", "h"]
+        )
         assert ff._encode_bits("big") == "00000000"
 
     def test_encode_msb_flag_set(self):
@@ -254,7 +262,7 @@ class TestFlagsFieldEncodeDecode:
 
     def test_decode_sets_flag_reads(self):
         ff = FlagsField(type=uint_type(8), flags=["a", "b"])
-        ff._decode_bits("10000000", "big")   # bit 7 set → first flag (MSB-first)
+        ff._decode_bits("10000000", "big")  # bit 7 set → first flag (MSB-first)
         assert ff.flag_reads["a"] is True
         assert ff.flag_reads["b"] is False
 
@@ -274,7 +282,9 @@ class TestFlagsFieldEncodeDecode:
         ff.ready = True
         encoded = ff._encode_bits("big")
 
-        recv = FlagsField(type=uint_type(8), flags=["armed", "locked", "error", "ready"])
+        recv = FlagsField(
+            type=uint_type(8), flags=["armed", "locked", "error", "ready"]
+        )
         recv._decode_bits(encoded, "big")
         assert recv.flag_reads["armed"] is True
         assert recv.flag_reads["ready"] is True
@@ -296,7 +306,7 @@ class TestFlagsFieldEncodeDecode:
     def test_big_endian_vs_little_differ_multibyte(self):
         ff = FlagsField(type=uint_type(16), flags=["a"])
         ff.a = True
-        big    = ff._encode_bits("big")
+        big = ff._encode_bits("big")
         little = ff._encode_bits("little")
         assert big != little
 
@@ -320,6 +330,7 @@ class TestFlagsFieldEncodeDecode:
 # Pack / unpack helpers
 # ===========================================================================
 
+
 class TestFlagsFieldPackUnpack:
     def test_pack_all_false_is_zero(self):
         ff = FlagsField(type=uint_type(8), flags=["a", "b"])
@@ -336,14 +347,15 @@ class TestFlagsFieldPackUnpack:
     def test_unpack_round_trips_pack(self):
         ff = FlagsField(type=uint_type(8), flags=["armed", "locked", "error"])
         original = {"armed": True, "locked": False, "error": True}
-        packed   = ff._pack(original)
-        result   = ff._unpack(packed)
+        packed = ff._pack(original)
+        result = ff._unpack(packed)
         assert result == original
 
 
 # ===========================================================================
 # Display
 # ===========================================================================
+
 
 class TestFlagsFieldDisplay:
     def test_repr_contains_name(self):

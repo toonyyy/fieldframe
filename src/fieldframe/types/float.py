@@ -36,6 +36,7 @@ from dataclasses import dataclass, field
 # struct format character for each supported width (big-endian prefix added at use)
 _STRUCT_FMT: dict[int, str] = {16: "e", 32: "f", 64: "d"}
 
+
 # Largest finite positive value for each width, derived from struct so there
 # is no hard-coded magic number to maintain.
 def _max_finite(bits: int) -> float:
@@ -44,9 +45,9 @@ def _max_finite(bits: int) -> float:
     # sign=0, all exponent bits 1 except the LSB, all mantissa bits 1.
     # Equivalent to the largest bytes that unpack without overflow.
     max_bytes = {
-        16: b"\x7b\xff",                               # 0x7BFF = 65504.0
-        32: b"\x7f\x7f\xff\xff",                       # 0x7F7FFFFF ≈ 3.4028e+38
-        64: b"\x7f\xef\xff\xff\xff\xff\xff\xff",       # 0x7FEFFFFF… ≈ 1.7977e+308
+        16: b"\x7b\xff",  # 0x7BFF = 65504.0
+        32: b"\x7f\x7f\xff\xff",  # 0x7F7FFFFF ≈ 3.4028e+38
+        64: b"\x7f\xef\xff\xff\xff\xff\xff\xff",  # 0x7FEFFFFF… ≈ 1.7977e+308
     }
     return struct.unpack(f">{fmt}", max_bytes[bits])[0]
 
@@ -54,6 +55,7 @@ def _max_finite(bits: int) -> float:
 # ---------------------------------------------------------------------------
 # Descriptor
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class FloatType:
@@ -80,7 +82,7 @@ class FloatType:
     FloatType(float16  range=[-65504.0, 65504.0])
     """
 
-    bits:          int
+    bits: int
     allow_special: bool = field(default=False, compare=False, hash=False)
 
     def __post_init__(self) -> None:
@@ -130,9 +132,7 @@ class FloatType:
             ``False``, or if *value* exceeds the representable range.
         """
         if not isinstance(value, (int, float)):
-            raise TypeError(
-                f"Expected float or int, got {type(value).__name__!r}"
-            )
+            raise TypeError(f"Expected float or int, got {type(value).__name__!r}")
         if math.isnan(value):
             if not self.allow_special:
                 raise ValueError(
@@ -199,10 +199,7 @@ class FloatType:
         fmt = _STRUCT_FMT[self.bits]
 
         # Convert bit string → bytes
-        raw_bytes = bytes(
-            int(bit_str[i:i + 8], 2)
-            for i in range(0, len(bit_str), 8)
-        )
+        raw_bytes = bytes(int(bit_str[i : i + 8], 2) for i in range(0, len(bit_str), 8))
 
         if endian == "little":
             raw_bytes = bytes(reversed(raw_bytes))
@@ -224,15 +221,13 @@ class FloatType:
 
             FloatType(float32  range=[-3.4028234663852886e+38, 3.4028234663852886e+38])
         """
-        return (
-            f"FloatType({self!s:<8} "
-            f"range=[{self.min_value}, {self.max_value}])"
-        )
+        return f"FloatType({self!s:<8} range=[{self.min_value}, {self.max_value}])"
 
 
 # ---------------------------------------------------------------------------
 # Convenience factories
 # ---------------------------------------------------------------------------
+
 
 def float_type(bits: int, allow_special: bool = False) -> FloatType:
     """Create a :class:`FloatType` for the given bit width (16, 32, or 64).

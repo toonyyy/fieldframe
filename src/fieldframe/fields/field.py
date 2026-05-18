@@ -71,16 +71,16 @@ class Field(FrameComponent):
 
     def __init__(
         self,
-        type:    IntType|FloatType|StringType,
-        name:    str = None,
+        type: IntType | FloatType | StringType,
+        name: str = None,
         default: int = 0,
     ) -> None:
-        self.name    = name
-        self.type    = type
+        self.name = name
+        self.type = type
         self.default = default
-        self.read:   int | None = None
+        self.read: int | None = None
         self._write: int | None = None  # backing store; set via property below
-        self.write   = default          # runs validation immediately
+        self.write = default  # runs validation immediately
 
     # ------------------------------------------------------------------
     # FrameComponent — required interface
@@ -92,37 +92,37 @@ class Field(FrameComponent):
 
     def _encode_bits(self, endian: str) -> str:
         """Encode :attr:`write` to a bit string.
- 
+
         The value is always serialised MSB-first internally.  For
         little-endian messages with multi-byte fields the resulting bytes are
         then reversed so the least-significant byte appears first on the wire.
- 
+
         Parameters
         ----------
         endian : {'big', 'little'}
             Byte order from the parent message.
- 
+
         Returns
         -------
         str
             A ``'0'``/``'1'`` string of length :meth:`length`.
         """
         return self.type.encode_bits(self.write, endian)
- 
+
     def _decode_bits(self, bit_str: str, endian: str) -> int:
         """Decode a bit string and store the result in :attr:`read`.
- 
+
         For little-endian messages with multi-byte fields the byte order is
         reversed before interpretation so that ``ba2int`` always sees
         MSB-first data.
- 
+
         Parameters
         ----------
         bit_str : str
             Exactly :meth:`length` characters of ``'0'``/``'1'``.
         endian : {'big', 'little'}
             Byte order from the parent message.
- 
+
         Returns
         -------
         int
@@ -162,8 +162,8 @@ class Field(FrameComponent):
 
     def _format(self, indent: int = 0) -> str:
         """Return an indented, box-drawn string for nested display."""
-        pad   = "    " * indent
-        bar   = "│"
+        pad = "    " * indent
+        bar = "│"
         width = 28
 
         def row(label, value):
@@ -171,11 +171,11 @@ class Field(FrameComponent):
 
         lines = [
             f"{pad}┌─ Field {'─' * (width + 4)}┐",
-            row("name",    self.name  or "(unnamed)"),
-            row("type",    self.type),
+            row("name", self.name or "(unnamed)"),
+            row("type", self.type),
             row("default", self.default),
-            row("write",   self.write),
-            row("read",    self.read if self.read is not None else "—"),
+            row("write", self.write),
+            row("read", self.read if self.read is not None else "—"),
             f"{pad}└{'─' * (width + 12)}┘",
         ]
         return "\n".join(lines)

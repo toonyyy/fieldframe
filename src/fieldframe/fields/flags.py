@@ -64,7 +64,7 @@ class _FlagProxy:
     def __init__(self, owner: "FlagsField", name: str) -> None:
         # Use object.__setattr__ to bypass FlagsField's own __setattr__
         object.__setattr__(self, "_owner", owner)
-        object.__setattr__(self, "_name",  name)
+        object.__setattr__(self, "_name", name)
 
     def __bool__(self) -> bool:
         """Evaluate the current write-side value of this flag."""
@@ -128,15 +128,13 @@ class FlagsField(FrameComponent):
 
     def __init__(
         self,
-        type:      IntType,
-        flags:     list[str],
-        name:      str = None,
+        type: IntType,
+        flags: list[str],
+        name: str = None,
         lsb_first: bool = False,
     ) -> None:
         if type.signed:
-            raise TypeError(
-                f"FlagsField requires an unsigned type, got {type}"
-            )
+            raise TypeError(f"FlagsField requires an unsigned type, got {type}")
         if len(flags) > type.bits:
             raise ValueError(
                 f"Too many flags ({len(flags)}) for a {type.bits}-bit field"
@@ -144,15 +142,15 @@ class FlagsField(FrameComponent):
         if len(flags) != len(set(flags)):
             raise ValueError("Flag names must be unique")
 
-        self.name      = name
-        self.type      = type
+        self.name = name
+        self.type = type
         self.lsb_first = lsb_first
-        self._names    = list(flags)
+        self._names = list(flags)
 
         # Write-side state — staged before encoding
         self._flag_writes: dict[str, bool] = {f: False for f in flags}
         # Read-side state — populated after decoding
-        self._flag_reads:  dict[str, bool] = {f: False for f in flags}
+        self._flag_reads: dict[str, bool] = {f: False for f in flags}
         # Sentinel: True once _decode_bits has been called at least once
         self._decoded: bool = False
 
@@ -186,7 +184,7 @@ class FlagsField(FrameComponent):
         ).to01()
 
         if endian == "little" and self.type.bits > 8:
-            chunks = [raw[i:i + 8] for i in range(0, len(raw), 8)]
+            chunks = [raw[i : i + 8] for i in range(0, len(raw), 8)]
             return "".join(reversed(chunks))
 
         return raw
@@ -207,12 +205,12 @@ class FlagsField(FrameComponent):
             The packed integer value (also stored so :attr:`read` returns it).
         """
         if endian == "little" and len(bit_str) > 8:
-            chunks = [bit_str[i:i + 8] for i in range(0, len(bit_str), 8)]
+            chunks = [bit_str[i : i + 8] for i in range(0, len(bit_str), 8)]
             bit_str = "".join(reversed(chunks))
 
         packed = ba2int(bitarray(bit_str), signed=False)
         self._flag_reads = self._unpack(packed)
-        self._decoded    = True
+        self._decoded = True
         return packed
 
     # ------------------------------------------------------------------
@@ -228,9 +226,7 @@ class FlagsField(FrameComponent):
         writes = object.__getattribute__(self, "_flag_writes")
         if name in writes:
             return _FlagProxy(self, name)
-        raise AttributeError(
-            f"{self.__class__.__name__!r} has no flag {name!r}"
-        )
+        raise AttributeError(f"{self.__class__.__name__!r} has no flag {name!r}")
 
     def __setattr__(self, name: str, value) -> None:
         """Route flag names to ``_flag_writes``; pass everything else through.
@@ -297,14 +293,14 @@ class FlagsField(FrameComponent):
         for i, name in enumerate(flag_dict):
             if flag_dict[name]:
                 bit_pos = i if self.lsb_first else (self.type.bits - 1 - i)
-                packed |= (1 << bit_pos)
+                packed |= 1 << bit_pos
         return packed
 
     def _unpack(self, packed: int) -> dict[str, bool]:
         """Convert packed integer → ``{name: bool}``."""
         result = {}
         for i, name in enumerate(self._names):
-            bit_pos      = i if self.lsb_first else (self.type.bits - 1 - i)
+            bit_pos = i if self.lsb_first else (self.type.bits - 1 - i)
             result[name] = bool(packed & (1 << bit_pos))
         return result
 
@@ -314,8 +310,8 @@ class FlagsField(FrameComponent):
 
     def _format(self, indent: int = 0) -> str:
         """Return an indented, box-drawn string for nested display."""
-        pad   = "    " * indent
-        bar   = "│"
+        pad = "    " * indent
+        bar = "│"
 
         # Build the flags line  e.g.  [✓] armed   [✗] locked   [✗] error
         flag_parts = []
@@ -326,12 +322,14 @@ class FlagsField(FrameComponent):
 
         # Determine box width from the widest row
         label_row = f"  {'name':<10}{self.name or '(unnamed)'}"
-        type_row  = f"  {'type':<10}{self.type}  ({self.type.bits}-bit, lsb_first={self.lsb_first})"
+        type_row = f"  {'type':<10}{self.type}  ({self.type.bits}-bit, lsb_first={self.lsb_first})"
         flags_row = f"  {'flags':<10}{flags_str}"
-        read_val  = "—" if self.read is None else str(self.read)
-        read_row  = f"  {'write':<10}{self.write}   read={read_val}"
+        read_val = "—" if self.read is None else str(self.read)
+        read_row = f"  {'write':<10}{self.write}   read={read_val}"
 
-        inner_width = max(len(r) for r in [label_row, type_row, flags_row, read_row]) + 2
+        inner_width = (
+            max(len(r) for r in [label_row, type_row, flags_row, read_row]) + 2
+        )
 
         def boxed(content):
             return f"{pad}{bar}{content:<{inner_width}}{bar}"
@@ -358,9 +356,6 @@ class FlagsField(FrameComponent):
             FlagsField(status, uint8, armed=✓ locked=✗ error=✗ ready=✓)
         """
         flags_str = " ".join(
-            f"{n}={'✓' if v else '✗'}"
-            for n, v in self._flag_writes.items()
+            f"{n}={'✓' if v else '✗'}" for n, v in self._flag_writes.items()
         )
-        return (
-            f"FlagsField({self.name or '?'}, {self.type}, {flags_str})"
-        )
+        return f"FlagsField({self.name or '?'}, {self.type}, {flags_str})"

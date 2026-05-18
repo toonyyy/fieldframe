@@ -37,8 +37,15 @@ Covers
 """
 
 from fieldframe import (
-    Message, Field, FlagsField, ScaledField, ComputedField,
-    uint_type, int_type, single_type, ascii_type,
+    Message,
+    Field,
+    FlagsField,
+    ScaledField,
+    ComputedField,
+    uint_type,
+    int_type,
+    single_type,
+    ascii_type,
 )
 from fieldframe.protocols import Protocol
 
@@ -46,6 +53,7 @@ from fieldframe.protocols import Protocol
 # ---------------------------------------------------------------------------
 # ComputedField functions
 # ---------------------------------------------------------------------------
+
 
 def frame_crc(fields):
     """XOR of every integer write value in the frame except the CRC itself.
@@ -67,15 +75,13 @@ def frame_crc(fields):
 
 def payload_length(fields):
     """Payload length in bytes, excluding the length and crc fields."""
-    return sum(
-        f.length() for f in fields
-        if f.name not in ("length", "crc")
-    ) // 8
+    return sum(f.length() for f in fields if f.name not in ("length", "crc")) // 8
 
 
 # ---------------------------------------------------------------------------
 # Protocol definition -- declarative subclass style
 # ---------------------------------------------------------------------------
+
 
 class CarProtocol(Protocol, key="msg_id", name="CarProtocol"):
     """
@@ -96,18 +102,19 @@ class CarProtocol(Protocol, key="msg_id", name="CarProtocol"):
 
     # -- Header -- prepended to every message automatically ---------------
     class Header(Message):
-        msg_id  = Field(type=uint_type(8), default=0)  # routing key
-        ecu_id  = Field(type=uint_type(8), default=0)  # sending ECU identifier
+        msg_id = Field(type=uint_type(8), default=0)  # routing key
+        ecu_id = Field(type=uint_type(8), default=0)  # sending ECU identifier
         version = Field(type=uint_type(4), default=1)  # protocol version
 
     # -- 1. Heartbeat -----------------------------------------------------
     class Heartbeat(Message):
         """Periodic ECU liveness ping -- sent by every node at 1 Hz."""
-        _msg_id   = "1"
-        unit_id   = Field(type=uint_type(8),  default=1)
-        uptime    = Field(type=uint_type(32), default=0)   # seconds since ignition
-        vin       = Field(type=ascii_type(6), default="")  # 6-char VIN fragment
-        state     = FlagsField(
+
+        _msg_id = "1"
+        unit_id = Field(type=uint_type(8), default=1)
+        uptime = Field(type=uint_type(32), default=0)  # seconds since ignition
+        vin = Field(type=ascii_type(6), default="")  # 6-char VIN fragment
+        state = FlagsField(
             type=uint_type(8),
             flags=["online", "healthy", "busy", "degraded"],
         )
@@ -116,52 +123,59 @@ class CarProtocol(Protocol, key="msg_id", name="CarProtocol"):
     # -- 2. VehicleStatus -------------------------------------------------
     class VehicleStatus(Message):
         """Live vehicle state -- speed, rpm, fuel level, system flags."""
-        _msg_id   = "2"
-        flags     = FlagsField(
+
+        _msg_id = "2"
+        flags = FlagsField(
             type=uint_type(8),
             flags=["engine_on", "handbrake", "doors_locked", "lights_on"],
         )
-        speed     = Field(type=uint_type(8),  default=0)    # km/h
-        rpm       = Field(type=uint_type(16), default=0)
-        fuel_pct  = Field(type=uint_type(8),  default=100)  # 0-100 %
-        gear      = Field(type=int_type(8),   default=0)    # signed -- reverse is negative
-        crc       = ComputedField(type=uint_type(8), compute=frame_crc, default=0)
+        speed = Field(type=uint_type(8), default=0)  # km/h
+        rpm = Field(type=uint_type(16), default=0)
+        fuel_pct = Field(type=uint_type(8), default=100)  # 0-100 %
+        gear = Field(type=int_type(8), default=0)  # signed -- reverse is negative
+        crc = ComputedField(type=uint_type(8), compute=frame_crc, default=0)
 
     # -- 3. GpsPosition ---------------------------------------------------
     class GpsPosition(Message):
         """Raw GPS fix -- float fields for coordinate precision."""
-        _msg_id    = "3"
-        latitude   = Field(type=single_type(), default=0.0)  # float32 degrees
-        longitude  = Field(type=single_type(), default=0.0)  # float32 degrees
+
+        _msg_id = "3"
+        latitude = Field(type=single_type(), default=0.0)  # float32 degrees
+        longitude = Field(type=single_type(), default=0.0)  # float32 degrees
         altitude_m = Field(type=uint_type(16), default=0)
-        satellites = Field(type=uint_type(8),  default=0)
-        hdop       = Field(type=uint_type(8),  default=0)    # x10 fixed-point
-        crc        = ComputedField(type=uint_type(8), compute=frame_crc, default=0)
+        satellites = Field(type=uint_type(8), default=0)
+        hdop = Field(type=uint_type(8), default=0)  # x10 fixed-point
+        crc = ComputedField(type=uint_type(8), compute=frame_crc, default=0)
 
     # -- 4. WheelCommand -- little-endian CAN-style frame -----------------
     class WheelCommand(Message, endian="little"):
         """Wheel torque command -- little-endian wire format for CAN."""
-        _msg_id   = "4"
-        wheel_id  = Field(type=uint_type(4), default=0)   # sub-byte: 0-3 per corner
-        direction = Field(type=int_type(8),  default=0)   # signed -- reverse is negative
-        torque    = ScaledField(               # 0-100 % in 0.5 steps -- 8 bits
-            name="torque", min_val=0.0, max_val=100.0, resolution=0.5,
+
+        _msg_id = "4"
+        wheel_id = Field(type=uint_type(4), default=0)  # sub-byte: 0-3 per corner
+        direction = Field(type=int_type(8), default=0)  # signed -- reverse is negative
+        torque = ScaledField(  # 0-100 % in 0.5 steps -- 8 bits
+            name="torque",
+            min_val=0.0,
+            max_val=100.0,
+            resolution=0.5,
         )
         crc = ComputedField(type=uint_type(8), compute=frame_crc, default=0)
 
     # -- 5. DiagnosticLog -------------------------------------------------
     class DiagnosticLog(Message):
         """Dense OBD-style sensor payload with a computed frame length."""
-        _msg_id      = "5"
-        timestamp    = Field(type=uint_type(32), default=0)
-        engine_temp  = Field(type=int_type(16),  default=0)   # signed, 0.01 degC
-        oil_pressure = Field(type=uint_type(16), default=0)   # kPa
-        battery_mv   = Field(type=uint_type(16), default=0)   # millivolts
-        intake_temp  = Field(type=int_type(8),   default=0)   # signed degC
-        throttle_pos = Field(type=uint_type(8),  default=0)   # 0-100 %
-        brake_press  = Field(type=uint_type(8),  default=0)   # 0-100 %
-        length       = ComputedField(type=uint_type(8), compute=payload_length, default=0)
-        crc          = ComputedField(type=uint_type(8), compute=frame_crc,      default=0)
+
+        _msg_id = "5"
+        timestamp = Field(type=uint_type(32), default=0)
+        engine_temp = Field(type=int_type(16), default=0)  # signed, 0.01 degC
+        oil_pressure = Field(type=uint_type(16), default=0)  # kPa
+        battery_mv = Field(type=uint_type(16), default=0)  # millivolts
+        intake_temp = Field(type=int_type(8), default=0)  # signed degC
+        throttle_pos = Field(type=uint_type(8), default=0)  # 0-100 %
+        brake_press = Field(type=uint_type(8), default=0)  # 0-100 %
+        length = ComputedField(type=uint_type(8), compute=payload_length, default=0)
+        crc = ComputedField(type=uint_type(8), compute=frame_crc, default=0)
 
 
 # ---------------------------------------------------------------------------
@@ -178,15 +192,15 @@ protocol = CarProtocol()
 # instance -- the registered instance already has the header injected,
 # so the crc field sees the full frame including header fields.
 hb = protocol.messages["1"]
-hb.unit_id.write  = 3
-hb.uptime.write   = 7200        # 2 hours since ignition
-hb['vin']         = "1HGCM8"
-hb.state.online   = True
-hb.state.healthy  = True
-hb.state.busy     = False
+hb.unit_id.write = 3
+hb.uptime.write = 7200  # 2 hours since ignition
+hb["vin"] = "1HGCM8"
+hb.state.online = True
+hb.state.healthy = True
+hb.state.busy = False
 hb.state.degraded = False
 
-bits   = hb.encode()
+bits = hb.encode()
 result = protocol.decode(bits)
 
 # Capture write_values AFTER encode so crc reflects the just-computed value
@@ -201,12 +215,12 @@ print("Decoded:", result)
 # ---------------------------------------------------------------------------
 
 gps = protocol.messages["3"]
-gps.latitude.write  = -33.8688   # Sydney
+gps.latitude.write = -33.8688  # Sydney
 gps.longitude.write = 151.2093
-gps['altitude_m']   = 58
+gps["altitude_m"] = 58
 gps.set(satellites=11, hdop=8)
 
-bits   = gps.encode()
+bits = gps.encode()
 result = protocol.decode(bits)
 
 print("\n" + "=" * 60)
@@ -220,11 +234,11 @@ print("Decoded:", result)
 # ---------------------------------------------------------------------------
 
 wc = protocol.messages["4"]
-wc.wheel_id.write  = 2          # rear-right
-wc.direction.write = -1         # signed -- braking/reverse
-wc['torque']       = 45.0       # ScaledField via item access
+wc.wheel_id.write = 2  # rear-right
+wc.direction.write = -1  # signed -- braking/reverse
+wc["torque"] = 45.0  # ScaledField via item access
 
-bits   = wc.encode()
+bits = wc.encode()
 result = protocol.decode(bits)
 
 print("\n" + "=" * 60)
@@ -238,13 +252,13 @@ print("Decoded:", result)
 # ---------------------------------------------------------------------------
 
 dl = protocol.get_message("DiagnosticLog")  # look up by message name
-dl['timestamp']    = 1_700_000_000
-dl['engine_temp']  = 9230                   # 92.30 degC in 0.01 degC units
-dl['oil_pressure'] = 280                    # kPa
-dl['battery_mv']   = 12650                  # 12.65 V in millivolts
+dl["timestamp"] = 1_700_000_000
+dl["engine_temp"] = 9230  # 92.30 degC in 0.01 degC units
+dl["oil_pressure"] = 280  # kPa
+dl["battery_mv"] = 12650  # 12.65 V in millivolts
 dl.set(intake_temp=35, throttle_pos=42, brake_press=0)
 
-bits   = dl.encode()
+bits = dl.encode()
 result = protocol.decode(bits)
 
 print("\n" + "=" * 60)

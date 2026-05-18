@@ -24,5 +24,5 @@ __all__ = [
     "double_type",
     "StringType",
     "ascii_type",
-    "utf8_type"
+    "utf8_type",
 ]

@@ -6,7 +6,6 @@ import pytest
 from fieldframe.core import Message
 from fieldframe.protocols import Protocol
 from fieldframe.fields.field import Field
-from fieldframe.fields.flags import FlagsField
 from fieldframe.types.int import uint_type
 
 
@@ -14,16 +13,17 @@ from fieldframe.types.int import uint_type
 # Reusable helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_header(name="Header"):
     return Message(name, [Field(name="msg_id", type=uint_type(8), default=0)])
 
 
 def _make_proto(name="TestProto", with_footer=False):
     """Build a simple two-message protocol via direct instantiation."""
-    header  = _make_header()
-    tel     = Message("Telemetry", [Field(name="altitude", type=uint_type(16), default=0)])
-    cmd     = Message("Command",   [Field(name="command",  type=uint_type(8),  default=0)])
-    kwargs  = dict(name=name, header=header, key="msg_id", messages={"1": tel, "2": cmd})
+    header = _make_header()
+    tel = Message("Telemetry", [Field(name="altitude", type=uint_type(16), default=0)])
+    cmd = Message("Command", [Field(name="command", type=uint_type(8), default=0)])
+    kwargs = dict(name=name, header=header, key="msg_id", messages={"1": tel, "2": cmd})
     if with_footer:
         footer = Message("Footer", [Field(name="crc", type=uint_type(8), default=0)])
         kwargs["footer"] = footer
@@ -41,13 +41,13 @@ def _encode_telemetry(proto, altitude=0):
 # Declarative Protocol subclass used across tests
 # ---------------------------------------------------------------------------
 
-class MyProto(Protocol, key="msg_id", name="MyProto"):
 
+class MyProto(Protocol, key="msg_id", name="MyProto"):
     class Header(Message):
         msg_id = Field(type=uint_type(8), default=0)
 
     class TelemetryMsg(Message):
-        _msg_id  = 1
+        _msg_id = 1
         altitude = Field(type=uint_type(16), default=0)
 
     class CommandMsg(Message):
@@ -58,6 +58,7 @@ class MyProto(Protocol, key="msg_id", name="MyProto"):
 # ===========================================================================
 # Declarative subclass style
 # ===========================================================================
+
 
 class TestProtocolDeclarativeStyle:
     def test_name_from_class_keyword(self):
@@ -100,6 +101,7 @@ class TestProtocolDeclarativeStyle:
 # Direct instantiation style
 # ===========================================================================
 
+
 class TestProtocolDirectInstantiation:
     def test_name_stored(self):
         proto = _make_proto("DirectProto")
@@ -122,7 +124,7 @@ class TestProtocolDirectInstantiation:
 
     def test_empty_messages_dict_ok(self):
         header = _make_header()
-        proto  = Protocol(name="P", header=header, key="msg_id", messages={})
+        proto = Protocol(name="P", header=header, key="msg_id", messages={})
         assert proto.messages == {}
 
     def test_footer_appended_to_each_message(self):
@@ -145,6 +147,7 @@ class TestProtocolDirectInstantiation:
 # ===========================================================================
 # Header / footer / key validation
 # ===========================================================================
+
 
 class TestProtocolHeaderFooterKeyValidation:
     def test_non_message_header_raises_type_error(self):
@@ -180,6 +183,7 @@ class TestProtocolHeaderFooterKeyValidation:
 # add_message / remove_message / get_message
 # ===========================================================================
 
+
 class TestProtocolMessageRegistry:
     def test_add_message(self):
         proto = _make_proto()
@@ -190,7 +194,9 @@ class TestProtocolMessageRegistry:
     def test_add_duplicate_raises_value_error(self):
         proto = _make_proto()
         with pytest.raises(ValueError, match="already in protocol"):
-            proto.add_message("1", Message("X", [Field(name="x", type=uint_type(8), default=0)]))
+            proto.add_message(
+                "1", Message("X", [Field(name="x", type=uint_type(8), default=0)])
+            )
 
     def test_remove_message(self):
         proto = _make_proto()
@@ -222,16 +228,17 @@ class TestProtocolMessageRegistry:
 # decode
 # ===========================================================================
 
+
 class TestProtocolDecode:
     def test_decode_telemetry_message(self):
         proto = _make_proto()
-        bits  = _encode_telemetry(proto, altitude=300)
+        bits = _encode_telemetry(proto, altitude=300)
         result = proto.decode(bits)
         assert result["altitude"] == 300
 
     def test_decode_telemetry_header_key_value(self):
         proto = _make_proto()
-        bits  = _encode_telemetry(proto, altitude=0)
+        bits = _encode_telemetry(proto, altitude=0)
         result = proto.decode(bits)
         assert result["Header"]["msg_id"] == 1
 
@@ -239,7 +246,7 @@ class TestProtocolDecode:
         proto = _make_proto()
         cmd = proto.messages["2"]
         cmd.command.write = 7
-        bits   = cmd.encode()
+        bits = cmd.encode()
         result = proto.decode(bits)
         assert result["command"] == 7
 
@@ -253,22 +260,22 @@ class TestProtocolDecode:
     @pytest.mark.parametrize("altitude", [0, 1, 300, 1000, 65535])
     def test_decode_various_altitudes(self, altitude):
         proto = _make_proto()
-        bits  = _encode_telemetry(proto, altitude=altitude)
+        bits = _encode_telemetry(proto, altitude=altitude)
         assert proto.decode(bits)["altitude"] == altitude
 
     def test_decode_unknown_key_raises_key_error(self):
         proto = _make_proto()
         # Manually craft a bit string with msg_id=99 (not registered)
-        header_bits = format(99, "08b")       # "01100011"
-        payload     = "0" * 16                 # altitude placeholder
+        header_bits = format(99, "08b")  # "01100011"
+        payload = "0" * 16  # altitude placeholder
         with pytest.raises(KeyError):
             proto.decode(header_bits + payload)
 
     def test_decode_with_footer(self):
         proto = _make_proto(with_footer=True)
-        msg   = proto.messages["1"]
+        msg = proto.messages["1"]
         msg.altitude.write = 500
-        bits   = msg.encode()
+        bits = msg.encode()
         result = proto.decode(bits)
         assert result["altitude"] == 500
 
@@ -276,21 +283,22 @@ class TestProtocolDecode:
         proto = MyProto()
         tel = proto.messages["1"]
         tel.altitude.write = 1234
-        bits   = tel.encode()
+        bits = tel.encode()
         result = proto.decode(bits)
         assert result["altitude"] == 1234
 
     def test_decode_result_contains_header_and_payload(self):
-        proto  = _make_proto()
-        bits   = _encode_telemetry(proto, altitude=42)
+        proto = _make_proto()
+        bits = _encode_telemetry(proto, altitude=42)
         result = proto.decode(bits)
-        assert "Header"   in result
+        assert "Header" in result
         assert "altitude" in result
 
 
 # ===========================================================================
 # display
 # ===========================================================================
+
 
 class TestProtocolDisplay:
     def test_display_runs_without_error(self, capsys):
@@ -309,4 +317,4 @@ class TestProtocolDisplay:
         proto.display()
         out = capsys.readouterr().out
         assert "Telemetry" in out
-        assert "Command"   in out
+        assert "Command" in out

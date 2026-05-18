@@ -106,13 +106,13 @@ class Message(FrameComponent):
 
     def __init_subclass__(
         cls,
-        endian:   str  = "big",
+        endian: str = "big",
         reversed: bool = False,
         **kwargs,
     ) -> None:
         super().__init_subclass__(**kwargs)
 
-        cls._default_endian   = endian
+        cls._default_endian = endian
         cls._default_reversed = reversed
 
         found = []
@@ -126,20 +126,20 @@ class Message(FrameComponent):
             for attr_name, _ in found:
                 delattr(cls, attr_name)
 
-    _fields_template:  list[FrameComponent] = []
-    _default_endian:   str  = "big"
+    _fields_template: list[FrameComponent] = []
+    _default_endian: str = "big"
     _default_reversed: bool = False
 
     def __init__(
         self,
-        name:     str                  = None,
-        fields:   list[FrameComponent] = None,
-        endian:   str                  = None,
-        reversed: bool                 = None,
+        name: str = None,
+        fields: list[FrameComponent] = None,
+        endian: str = None,
+        reversed: bool = None,
     ) -> None:
         cls = self.__class__
 
-        self.endian   = endian   if endian   is not None else cls._default_endian
+        self.endian = endian if endian is not None else cls._default_endian
         self.reversal = reversed if reversed is not None else cls._default_reversed
 
         if self.endian not in ("big", "little"):
@@ -211,7 +211,7 @@ class Message(FrameComponent):
         """Decode every component using this message's endian. No reversal."""
         pos = 0
         for component in self.fields:
-            component._decode_bits(bit_str[pos:pos + component.length()], self.endian)
+            component._decode_bits(bit_str[pos : pos + component.length()], self.endian)
             pos += component.length()
 
     # ------------------------------------------------------------------
@@ -251,11 +251,13 @@ class Message(FrameComponent):
     def encode_bytes(self) -> bytes:
         """Encode to a byte array, padding to the next byte boundary."""
         from bitarray import bitarray as _bitarray
+
         return _bitarray(self._apply_padding(self.encode())).tobytes()
 
     def decode_bytes(self, data: bytes) -> dict:
         """Decode a byte array, stripping padding bits added by :meth:`encode_bytes`."""
         from bitarray import bitarray as _bitarray
+
         ba = _bitarray()
         ba.frombytes(data)
         return self.decode(self._strip_padding(ba.to01()))
@@ -402,8 +404,7 @@ class Message(FrameComponent):
         else:
             if position > len(self.fields):
                 raise IndexError(
-                    f"Position {position} out of bounds "
-                    f"({len(self.fields)} fields)"
+                    f"Position {position} out of bounds ({len(self.fields)} fields)"
                 )
             self.fields.insert(position, component)
 
@@ -411,8 +412,7 @@ class Message(FrameComponent):
         """Remove the component at *position*."""
         if position >= len(self.fields):
             raise IndexError(
-                f"Position {position} out of bounds "
-                f"({len(self.fields)} fields)"
+                f"Position {position} out of bounds ({len(self.fields)} fields)"
             )
         self.fields.pop(position)
 
@@ -450,29 +450,32 @@ class Message(FrameComponent):
         # ----------------------------------------------------------
         # Determine column widths by scanning all leaf components
         # ----------------------------------------------------------
-        col_name  = len("name")
-        col_type  = len("type")
+        col_name = len("name")
+        col_type = len("type")
         col_write = len("write")
-        col_read  = len("read")
+        col_read = len("read")
 
         for c in self.fields:
-            col_name  = max(col_name,  len(str(c.name or "")))
-            col_type  = max(col_type,  len("Message" if isinstance(c, Message)
-                                           else str(getattr(c, "type", ""))))
+            col_name = max(col_name, len(str(c.name or "")))
+            col_type = max(
+                col_type,
+                len(
+                    "Message" if isinstance(c, Message) else str(getattr(c, "type", ""))
+                ),
+            )
             if not isinstance(c, Message):
                 write_v = c.write if hasattr(c, "write") else ""
-                read_v  = c.read  if hasattr(c, "read")  else ""
+                read_v = c.read if hasattr(c, "read") else ""
                 if isinstance(c, FlagsField):
                     # show flag state instead of the packed int
                     write_s = "  ".join(
-                        f"{'✓' if v else '✗'}{n}"
-                        for n, v in c.flag_writes.items()
+                        f"{'✓' if v else '✗'}{n}" for n, v in c.flag_writes.items()
                     )
                 else:
                     write_s = "" if write_v is None else str(write_v)
-                read_s  = "" if read_v  is None else str(read_v)
+                read_s = "" if read_v is None else str(read_v)
                 col_write = max(col_write, len(write_s))
-                col_read  = max(col_read,  len(read_s))
+                col_read = max(col_read, len(read_s))
 
         # ensure sub-message summary fits in write column
         col_write = max(col_write, len("(sub-message)"))
@@ -489,27 +492,26 @@ class Message(FrameComponent):
             )
 
         sep = (
-            f"{pad}├{'─'*(col_name+2)}┼{'─'*(col_type+2)}"
-            f"┼{'─'*(col_write+2)}┼{'─'*(col_read+2)}┤"
+            f"{pad}├{'─' * (col_name + 2)}┼{'─' * (col_type + 2)}"
+            f"┼{'─' * (col_write + 2)}┼{'─' * (col_read + 2)}┤"
         )
         _ = (
-            f"{pad}┌{'─'*(col_name+2)}┬{'─'*(col_type+2)}"
-            f"┬{'─'*(col_write+2)}┬{'─'*(col_read+2)}┐"
+            f"{pad}┌{'─' * (col_name + 2)}┬{'─' * (col_type + 2)}"
+            f"┬{'─' * (col_write + 2)}┬{'─' * (col_read + 2)}┐"
         )
         bot = (
-            f"{pad}└{'─'*(col_name+2)}┴{'─'*(col_type+2)}"
-            f"┴{'─'*(col_write+2)}┴{'─'*(col_read+2)}┘"
+            f"{pad}└{'─' * (col_name + 2)}┴{'─' * (col_type + 2)}"
+            f"┴{'─' * (col_write + 2)}┴{'─' * (col_read + 2)}┘"
         )
 
         # ----------------------------------------------------------
         # Title line (above the column-header row)
         # ----------------------------------------------------------
-        rev_tag   = ", reversed" if self.reversal else ""
-        title     = f" {self.name}  ({self.endian}-endian{rev_tag}, {self.length()} bits)"
+        rev_tag = ", reversed" if self.reversal else ""
+        title = f" {self.name}  ({self.endian}-endian{rev_tag}, {self.length()} bits)"
         title_width = col_name + col_type + col_write + col_read + 13
         title_bar = (
-            f"{pad}┌─ Message: "
-            f"{title}{'─' * max(0, title_width - len(title) - 11)}┐"
+            f"{pad}┌─ Message: {title}{'─' * max(0, title_width - len(title) - 11)}┐"
         )
 
         # ----------------------------------------------------------
@@ -521,22 +523,23 @@ class Message(FrameComponent):
             sep,
         ]
 
-        sub_messages = []   # collect for rendering below the table
+        sub_messages = []  # collect for rendering below the table
 
         for c in self.fields:
             if isinstance(c, Message):
-                lines.append(row(
-                    str(c.name or ""),
-                    "Message",
-                    f"{c.length()} bits",
-                    "",
-                ))
+                lines.append(
+                    row(
+                        str(c.name or ""),
+                        "Message",
+                        f"{c.length()} bits",
+                        "",
+                    )
+                )
                 sub_messages.append(c)
             else:
                 if isinstance(c, FlagsField):
                     write_s = "  ".join(
-                        f"{'✓' if v else '✗'}{n}"
-                        for n, v in c.flag_writes.items()
+                        f"{'✓' if v else '✗'}{n}" for n, v in c.flag_writes.items()
                     )
                 else:
                     write_v = c.write if hasattr(c, "write") else None
@@ -545,12 +548,14 @@ class Message(FrameComponent):
                 read_v = c.read if hasattr(c, "read") else None
                 read_s = "—" if read_v is None else str(read_v)
 
-                lines.append(row(
-                    str(c.name or ""),
-                    str(getattr(c, "type", "")),
-                    write_s,
-                    read_s,
-                ))
+                lines.append(
+                    row(
+                        str(c.name or ""),
+                        str(getattr(c, "type", "")),
+                        write_s,
+                        read_s,
+                    )
+                )
 
         lines.append(bot)
 
@@ -559,7 +564,9 @@ class Message(FrameComponent):
         # ----------------------------------------------------------
         for sub in sub_messages:
             lines.append("")
-            lines.append(f"{pad}\t↳ {sub.name}  ({sub.endian}-endian, {sub.length()} bits)")
+            lines.append(
+                f"{pad}\t↳ {sub.name}  ({sub.endian}-endian, {sub.length()} bits)"
+            )
             lines.append(sub._format(indent + 1))
 
         return "\n".join(lines)

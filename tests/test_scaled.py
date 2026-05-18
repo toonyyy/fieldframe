@@ -2,7 +2,6 @@
 Tests for fieldframe.fields.scaled — ScaledField class.
 """
 
-import math
 import pytest
 from fieldframe.fields.scaled import ScaledField
 
@@ -10,6 +9,7 @@ from fieldframe.fields.scaled import ScaledField
 # ===========================================================================
 # Construction
 # ===========================================================================
+
 
 class TestScaledFieldConstruction:
     def test_name_stored(self):
@@ -22,8 +22,8 @@ class TestScaledFieldConstruction:
 
     def test_min_max_resolution_stored(self):
         sf = ScaledField(min_val=-40.0, max_val=85.0, resolution=0.1)
-        assert sf.min_val    == pytest.approx(-40.0)
-        assert sf.max_val    == pytest.approx(85.0)
+        assert sf.min_val == pytest.approx(-40.0)
+        assert sf.max_val == pytest.approx(85.0)
         assert sf.resolution == pytest.approx(0.1)
 
     def test_default_is_min_val_when_not_provided(self):
@@ -74,6 +74,7 @@ class TestScaledFieldConstruction:
 # Bits and steps
 # ===========================================================================
 
+
 class TestScaledFieldBitsAndSteps:
     def test_temperature_steps(self):
         # round((85 − (−40)) / 0.1) = 1250
@@ -98,12 +99,12 @@ class TestScaledFieldBitsAndSteps:
     def test_0_to_255_steps_and_bits(self):
         sf = ScaledField(min_val=0.0, max_val=255.0, resolution=1.0)
         assert sf.steps == 255
-        assert sf.bits  == 8     # ceil(log2(256)) = 8
+        assert sf.bits == 8  # ceil(log2(256)) = 8
 
     def test_0_to_1_single_step(self):
         sf = ScaledField(min_val=0.0, max_val=1.0, resolution=1.0)
         assert sf.steps == 1
-        assert sf.bits  == 1     # ceil(log2(2)) = 1
+        assert sf.bits == 1  # ceil(log2(2)) = 1
 
     def test_bits_property_matches_length(self):
         sf = ScaledField(min_val=-40.0, max_val=85.0, resolution=0.1)
@@ -121,6 +122,7 @@ class TestScaledFieldBitsAndSteps:
 # ===========================================================================
 # write property
 # ===========================================================================
+
 
 class TestScaledFieldWriteProperty:
     def test_write_valid_midpoint(self):
@@ -183,6 +185,7 @@ class TestScaledFieldWriteProperty:
 # _to_int / _to_float helpers
 # ===========================================================================
 
+
 class TestScaledFieldConversionHelpers:
     def test_to_int_at_min_val(self):
         sf = ScaledField(min_val=-40.0, max_val=85.0, resolution=0.1)
@@ -226,6 +229,7 @@ class TestScaledFieldConversionHelpers:
 # ===========================================================================
 # _encode_bits / _decode_bits
 # ===========================================================================
+
 
 class TestScaledFieldEncodeDecode:
     def test_encode_min_val_is_all_zeros(self):
@@ -300,7 +304,7 @@ class TestScaledFieldEncodeDecode:
         # 11-bit field → 2 bytes needed → endian matters
         sf = ScaledField(min_val=-40.0, max_val=85.0, resolution=0.1)
         sf.write = 25.0
-        big    = sf._encode_bits("big")
+        big = sf._encode_bits("big")
         little = sf._encode_bits("little")
         assert big != little
 
@@ -308,6 +312,7 @@ class TestScaledFieldEncodeDecode:
 # ===========================================================================
 # Display
 # ===========================================================================
+
 
 class TestScaledFieldDisplay:
     def test_repr_contains_name(self):

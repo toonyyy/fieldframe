@@ -14,13 +14,14 @@ from fieldframe.types.int import uint_type, int_type
 # Module-level Message subclasses (declarative style)
 # ---------------------------------------------------------------------------
 
+
 class SpeedMsg(Message):
     speed = Field(type=uint_type(8), default=0)
 
 
 class GuidanceMsg(Message):
-    speed   = Field(type=uint_type(8),  default=0)
-    heading = Field(type=int_type(16),  default=0)
+    speed = Field(type=uint_type(8), default=0)
+    heading = Field(type=int_type(16), default=0)
 
 
 class LittleMsg(Message, endian="little"):
@@ -39,28 +40,29 @@ def _xor_checksum(fields):
     acc = 0
     for f in fields:
         if hasattr(f, "write") and hasattr(f, "name") and f.name != "checksum":
-            acc ^= (f.write or 0)
+            acc ^= f.write or 0
     return acc & 0xFF
 
 
 class ChecksumMsg(Message):
-    payload  = Field(type=uint_type(8), default=0)
+    payload = Field(type=uint_type(8), default=0)
     checksum = ComputedField(type=uint_type(8), compute=_xor_checksum)
 
 
 class HeaderMsg(Message):
-    version = Field(type=uint_type(4),  default=1)
-    msg_id  = Field(type=uint_type(12), default=0)
+    version = Field(type=uint_type(4), default=1)
+    msg_id = Field(type=uint_type(12), default=0)
 
 
 class NestedMsg(Message):
-    header   = HeaderMsg()
+    header = HeaderMsg()
     altitude = Field(type=uint_type(16), default=0)
 
 
 # ===========================================================================
 # Construction
 # ===========================================================================
+
 
 class TestMessageConstruction:
     # --- Declarative style ---
@@ -112,12 +114,16 @@ class TestMessageConstruction:
         assert msg.endian == "big"
 
     def test_direct_endian_little(self):
-        msg = Message("P", [Field(name="x", type=uint_type(8), default=0)], endian="little")
+        msg = Message(
+            "P", [Field(name="x", type=uint_type(8), default=0)], endian="little"
+        )
         assert msg.endian == "little"
 
     def test_invalid_endian_raises(self):
         with pytest.raises(ValueError, match="endian"):
-            Message("P", [Field(name="x", type=uint_type(8), default=0)], endian="middle")
+            Message(
+                "P", [Field(name="x", type=uint_type(8), default=0)], endian="middle"
+            )
 
     def test_direct_empty_fields_ok(self):
         msg = Message("Empty", [])
@@ -132,12 +138,13 @@ class TestMessageConstruction:
 # length()
 # ===========================================================================
 
+
 class TestMessageLength:
     def test_single_8bit_field(self):
         assert SpeedMsg().length() == 8
 
     def test_two_fields(self):
-        assert GuidanceMsg().length() == 24   # 8 + 16
+        assert GuidanceMsg().length() == 24  # 8 + 16
 
     def test_empty_message(self):
         assert Message("E", []).length() == 0
@@ -150,16 +157,20 @@ class TestMessageLength:
         assert FlagsMsg().length() == 8
 
     def test_direct_style_length(self):
-        msg = Message("P", [
-            Field(name="a", type=uint_type(8),  default=0),
-            Field(name="b", type=uint_type(16), default=0),
-        ])
+        msg = Message(
+            "P",
+            [
+                Field(name="a", type=uint_type(8), default=0),
+                Field(name="b", type=uint_type(16), default=0),
+            ],
+        )
         assert msg.length() == 24
 
 
 # ===========================================================================
 # encode / decode round trips
 # ===========================================================================
+
 
 class TestMessageEncodeDecode:
     def test_single_field_round_trip(self):
@@ -172,12 +183,12 @@ class TestMessageEncodeDecode:
 
     def test_multiple_field_round_trip(self):
         msg = GuidanceMsg()
-        msg.speed.write   = 120
+        msg.speed.write = 120
         msg.heading.write = -500
-        bits   = msg.encode()
+        bits = msg.encode()
         assert len(bits) == 24
         result = msg.decode(bits)
-        assert result["speed"]   == 120
+        assert result["speed"] == 120
         assert result["heading"] == -500
 
     def test_encode_returns_only_01_chars(self):
@@ -215,6 +226,7 @@ class TestMessageEncodeDecode:
 # Little-endian and reversed modes
 # ===========================================================================
 
+
 class TestMessageEndianAndReversal:
     def test_little_endian_differs_from_big_for_multibyte(self):
         big = GuidanceMsg()
@@ -232,14 +244,14 @@ class TestMessageEndianAndReversal:
     def test_reversed_round_trip(self):
         msg = ReversedMsg()
         msg.byte.write = 99
-        bits   = msg.encode()
+        bits = msg.encode()
         result = msg.decode(bits)
         assert result["byte"] == 99
 
     def test_reversed_bit_string_differs_from_normal(self):
-        normal   = SpeedMsg()
+        normal = SpeedMsg()
         reversed_ = ReversedMsg()
-        normal.speed.write  = 99
+        normal.speed.write = 99
         reversed_.byte.write = 99
         assert normal.encode() != reversed_.encode()
 
@@ -248,9 +260,10 @@ class TestMessageEndianAndReversal:
 # Nested sub-messages
 # ===========================================================================
 
+
 class TestMessageNested:
     def test_nested_length(self):
-        assert NestedMsg().length() == 32   # 16 (header) + 16 (altitude)
+        assert NestedMsg().length() == 32  # 16 (header) + 16 (altitude)
 
     def test_nested_encode_length(self):
         msg = NestedMsg()
@@ -259,19 +272,19 @@ class TestMessageNested:
     def test_nested_round_trip(self):
         msg = NestedMsg()
         msg.header.version.write = 2
-        msg.header.msg_id.write  = 7
-        msg.altitude.write       = 1500
-        bits   = msg.encode()
+        msg.header.msg_id.write = 7
+        msg.altitude.write = 1500
+        bits = msg.encode()
         result = msg.decode(bits)
-        assert result["header"]["version"]  == 2
-        assert result["header"]["msg_id"]   == 7
-        assert result["altitude"]           == 1500
+        assert result["header"]["version"] == 2
+        assert result["header"]["msg_id"] == 7
+        assert result["altitude"] == 1500
 
     def test_nested_read_values_structure(self):
         msg = NestedMsg()
         msg.decode(msg.encode())
         rv = msg.read_values
-        assert "header"   in rv
+        assert "header" in rv
         assert "altitude" in rv
         assert isinstance(rv["header"], dict)
 
@@ -279,6 +292,7 @@ class TestMessageNested:
 # ===========================================================================
 # ComputedField inside Message
 # ===========================================================================
+
 
 class TestMessageComputedField:
     def test_computed_field_called_on_encode(self):
@@ -291,10 +305,10 @@ class TestMessageComputedField:
     def test_computed_field_round_trip(self):
         msg = ChecksumMsg()
         msg.payload.write = 0x42
-        bits   = msg.encode()
+        bits = msg.encode()
         result = msg.decode(bits)
         # checksum on decode reads the raw wire value, not recomputed
-        assert result["payload"]  == 0x42
+        assert result["payload"] == 0x42
         assert result["checksum"] == 0x42  # xor of payload only
 
     def test_computed_field_write_updated_after_encode(self):
@@ -308,12 +322,13 @@ class TestMessageComputedField:
 # FlagsField inside Message
 # ===========================================================================
 
+
 class TestMessageFlagsField:
     def test_flags_round_trip(self):
         msg = FlagsMsg()
-        msg.status.armed  = True
-        msg.status.ready  = True
-        bits   = msg.encode()
+        msg.status.armed = True
+        msg.status.ready = True
+        bits = msg.encode()
         result = msg.decode(bits)
         # read values contains packed int
         assert result["status"] == msg.status.write
@@ -327,6 +342,7 @@ class TestMessageFlagsField:
 # Bytes API — encode_bytes / decode_bytes / from_bits / from_bytes
 # ===========================================================================
 
+
 class TestMessageBytesAPI:
     def test_encode_bytes_returns_bytes(self):
         msg = SpeedMsg()
@@ -336,16 +352,16 @@ class TestMessageBytesAPI:
     def test_encode_decode_bytes_round_trip(self):
         msg = SpeedMsg()
         msg.speed.write = 200
-        data   = msg.encode_bytes()
+        data = msg.encode_bytes()
         result = msg.decode_bytes(data)
         assert result["speed"] == 200
 
     def test_encode_decode_bytes_multi_field(self):
         msg = GuidanceMsg()
-        msg.speed.write   = 120
+        msg.speed.write = 120
         msg.heading.write = -100
         result = msg.decode_bytes(msg.encode_bytes())
-        assert result["speed"]   == 120
+        assert result["speed"] == 120
         assert result["heading"] == -100
 
     def test_from_bits_round_trip(self):
@@ -374,9 +390,10 @@ class TestMessageBytesAPI:
 # Padding helpers
 # ===========================================================================
 
+
 class TestMessagePadding:
     def test_byte_aligned_no_padding(self):
-        msg = SpeedMsg()   # 8 bits
+        msg = SpeedMsg()  # 8 bits
         assert msg._pad_count() == 0
 
     def test_non_aligned_pad_count(self):
@@ -386,7 +403,7 @@ class TestMessagePadding:
 
     def test_3bit_field_pad_count(self):
         msg = Message("P", [Field(name="x", type=uint_type(3), default=0)])
-        assert msg._pad_count() == 5   # 3 bits → needs 5 to reach 8
+        assert msg._pad_count() == 5  # 3 bits → needs 5 to reach 8
 
     def test_apply_padding_big_endian(self):
         msg = Message("P", [Field(name="x", type=uint_type(3), default=0)])
@@ -394,7 +411,9 @@ class TestMessagePadding:
         assert padded == "101" + "0" * 5
 
     def test_apply_padding_little_endian(self):
-        msg = Message("P", [Field(name="x", type=uint_type(3), default=0)], endian="little")
+        msg = Message(
+            "P", [Field(name="x", type=uint_type(3), default=0)], endian="little"
+        )
         padded = msg._apply_padding("101")
         assert padded == "0" * 5 + "101"
 
@@ -407,6 +426,7 @@ class TestMessagePadding:
 # ===========================================================================
 # Field access — __getattr__ / __getitem__ / __setitem__ / set()
 # ===========================================================================
+
 
 class TestMessageFieldAccess:
     def test_getattr_returns_field(self):
@@ -441,7 +461,7 @@ class TestMessageFieldAccess:
     def test_set_method_updates_write(self):
         msg = GuidanceMsg()
         msg.set(speed=100, heading=-200)
-        assert msg.speed.write   == 100
+        assert msg.speed.write == 100
         assert msg.heading.write == -200
 
     def test_set_unknown_field_raises_key_error(self):
@@ -463,6 +483,7 @@ class TestMessageFieldAccess:
 # ===========================================================================
 # Dynamic field manipulation — add_field / remove_field
 # ===========================================================================
+
 
 class TestMessageDynamicFields:
     def test_add_field_appends_by_default(self):
@@ -508,19 +529,20 @@ class TestMessageDynamicFields:
 # write_values / read_values properties
 # ===========================================================================
 
+
 class TestMessageValueProperties:
     def test_write_values_contains_all_fields(self):
         msg = GuidanceMsg()
         wv = msg.write_values
-        assert "speed"   in wv
+        assert "speed" in wv
         assert "heading" in wv
 
     def test_write_values_reflect_staged_values(self):
         msg = GuidanceMsg()
-        msg.speed.write   = 77
+        msg.speed.write = 77
         msg.heading.write = -10
         wv = msg.write_values
-        assert wv["speed"]   == 77
+        assert wv["speed"] == 77
         assert wv["heading"] == -10
 
     def test_read_values_none_before_decode(self):
@@ -550,6 +572,7 @@ class TestMessageValueProperties:
 # Display — __repr__ / __str__
 # ===========================================================================
 
+
 class TestMessageDisplay:
     def test_repr_contains_name(self):
         msg = SpeedMsg()
@@ -574,11 +597,11 @@ class TestMessageDisplay:
     def test_str_contains_field_names(self):
         msg = GuidanceMsg()
         s = str(msg)
-        assert "speed"   in s
+        assert "speed" in s
         assert "heading" in s
 
     def test_str_nested_contains_sub_message(self):
         msg = NestedMsg()
         s = str(msg)
-        assert "header"   in s
+        assert "header" in s
         assert "altitude" in s
