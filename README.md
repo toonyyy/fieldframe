@@ -1,5 +1,9 @@
 # fieldframe
 
+[![PyPI version](https://img.shields.io/pypi/v/fieldframe.svg)](https://pypi.org/project/fieldframe/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/fieldframe.svg)](https://pypi.org/project/fieldframe/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **fieldframe** is a Python library for defining, encoding, and decoding structured binary messages — built for embedded systems, hardware protocols, and any application where precise bit-level control matters.
 
 Define your message structure once as a Python class. fieldframe handles encoding, decoding, validation, and byte-order concerns automatically.
@@ -55,6 +59,8 @@ print(again.read_values)
 ---
 
 ## Installation
+
+fieldframe is available on [PyPI](https://pypi.org/project/fieldframe/):
 
 ```bash
 pip install fieldframe
